@@ -37,10 +37,9 @@ DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'build',
-            #'HOST': '47.110.226.117',
             'HOST': '127.0.0.1',
-            'USER': 'build',
-            'PASSWORD': 'build@117',
+            'USER': '*',
+            'PASSWORD': '*',
             'PORT': '3306',
         }
 }
@@ -68,9 +67,9 @@ if 'Linux' not in platform.system():
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'build',
-            'HOST': '120.27.21.176',
-            'USER': 'root',
-            'PASSWORD': 'zjzy@123',
+            'HOST': '*',
+            'USER': '*',
+            'PASSWORD': '*',
             'PORT': '3306',
         }
     }
@@ -83,12 +82,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '5&fuhg&8g%4r^%1g0ih+fgi#id6&y@tirfv&v7*i4hgc^(2c&&'
-SIGN_KEY = '234$#SDLSKDJAHFJLJL%SDFJLLJ38581312LLSDFJKKJ'
+SECRET_KEY = ''
+SIGN_KEY = ''
 # APPEND_SLASH=False
 # SECURITY WARNING: don't run with debug turned on in production!
 
-ALLOWED_HOSTS = ['build.superhcloud.com','127.0.0.1','47.104.93.114','120.27.21.176']
+ALLOWED_HOSTS = ['build.superhcloud.com','127.0.0.1]
 
 # Application definition
 
@@ -201,8 +200,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = False
 EMAIL_HOST = 'smtp.263.net'
 EMAIL_PORT = 25
-EMAIL_HOST_USER = 'maxc@supervcloud.com'
-EMAIL_HOST_PASSWORD = 'ma668858'
+EMAIL_HOST_USER = '*'
+EMAIL_HOST_PASSWORD = '*'
 EMAIL_FROM = '报警邮件'
 #  ---------------------------------------------------------
 
@@ -218,7 +217,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 from datetime import datetime
 # now = datetime.now().strftime('%Y%m%d%H%M%S')
 now = datetime.now().strftime('%Y%m%d')
-base = '/Users/xuechao.ma/code/log'
+base = '/Users/code/log'
 if 'Linux' in platform.system():
     base = '/home/log/'
 file_name = base+'public.log'
