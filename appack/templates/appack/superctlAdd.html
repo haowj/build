@@ -1,0 +1,88 @@
+{% extends 'appack/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}连接器{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block content %}
+       <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">配置</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="col-md-2">
+                        <input class="input-text version" placeholder="版本">
+                    </div>
+                    <div class="col-md-2">
+                                <input class="file" type="file" id="file" name="file" size="10"/>
+
+                    </div>
+                    <div class="col-md-8">
+                        <input class="input-text comment" placeholder="备注">
+
+                    </div>
+
+
+                </div>
+                 <div class="box-footer">
+                    <button type="submit" class="btn btn-primary addsdc" onclick="ajax()">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block js_fun %}
+    <script>
+
+        function ajax() {
+
+            form_data = new FormData();
+            version=$(".version").val();
+            file = $(".file")[0].files[0];
+            comment = $(".comment").val();
+
+            form_data.append('file',file);
+            form_data.append('version',version);
+            form_data.append('comment',comment);
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+            form_data.append('ts',ts);
+            form_data.append('sign',sign_dt);
+            show_part_loading();
+            $.ajax({
+                url: "{% url 'api:superctlAdd' %}",
+                type: 'POST',
+                cache: false,
+                fileElementId:"file",
+                data: form_data,
+                enctype:'multipart/form-data',
+                processData: false,
+                contentType: false,
+                dataType: "json",
+
+                success: function (data) {    //后端返回数据，是列表形式的
+                    hide_part_loading();
+                    if (data.code===200) {
+                        html = "新增配置成功";
+                        sw=1;
+                        setTimeout(function () {
+                            $(location).attr('href', '{% url 'appack:superctl' %}');
+                    }, 2000);
+                    }
+                    else {
+                        html = "新增配置失败,原因:" + data.msg;
+                        sw=1;
+                    }
+                    part_alert(sw,html,main_msg);
+                }
+            });
+        }
+
+
+
+    </script>
+
+{% endblock %}

@@ -1,0 +1,214 @@
+{% extends 'checkout/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}设备策略管理{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block content %}
+    <div class="row add_button">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <button type="submit" class="btn btn-primary" onclick="show_and_hide()">新增设备策略</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row add_testap" style="display: none">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">新增设备策略</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <select class="form-control dev_model" id="dev_model">
+                                <option value="0">请选择设备型号</option>
+                                {% for i in data.devList %}
+                                    <option value="{{ i.id }}">{{ i.dev_model }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control testSet" id="testSet">
+                                <option value="">请选择测试集</option>
+                                {% for i in data.testSetList %}
+                                    <option value="{{ i.id }}">{{ i.case_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                </div>
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-primary" onclick="addApSet()">提交</button>
+                    <button type="submit" class="btn btn-primary" onclick="back_show_and_hide()">返回</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <div class="row list_testap">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">设备策略列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="table_id" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>型号</th>
+                            <th>测试集名称</th>
+{#                            <th>测试用例列表</th>#}
+                            <th>操作人</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in data.ApSetList %}
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td>{{ i.dev_model }}</td>
+                                <td>{{ i.caseSetName }}</td>
+{#                                <td>{{ i.case_action }}</td>#}
+                                <td>{{ i.operator }}</td>
+                                <td>{{ i.update_time }}</td>
+                                <td><div class="btn btn-sm btn-primary btn-xs" onclick="getInfo(this)" id="{{ i.id }}">查看</div>
+                                <div class="btn btn-sm btn-primary btn-xs" onclick="del(this)" id="{{ i.id }}_{{ i.dev_model }}">删除</div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+        $(document).ready(function () {
+            $('#table_id').DataTable(
+                {
+                    "destroy": true,
+                    {#"scrollY": 300,#}
+                    {#"scrollX": true,#}
+                    "scrollCollapse": true,
+                    "bPaginate": true,
+                    "bLengthChange": true,
+                    "bAutoWidth": true,
+                    "aaSorting": [],
+                    "order": [[0, "desc"]]
+                }
+            );
+        });
+
+        function show_and_hide() {
+            hide('.add_button');
+            hide('.list_testap');
+            show('.add_testap');
+        }
+
+        function back_show_and_hide() {
+            show('.add_button');
+            show('.list_testap');
+            hide('.add_testap');
+        }
+        function del(obj) {
+            idobj = obj.id;
+            id = idobj.split('_')[0];
+            dev_model = idobj.split('_')[1];
+            if (confirm("确定要删除[" + dev_model + "]的配置吗?")) {
+                $.ajax({
+                    type: 'get',
+                    url: '{% url 'checkout:api_delTestAPSetList' %}',
+                    data: {
+                        'id': id
+                    },
+                    contentType: 'application/json',
+                    success: function (data) {    //后端返回数据，是列表形式的
+                        if (data.code === 200) {
+                            html = "删除成功";
+                            part_alert(1, html, main_msg, 5000);
+                            location.reload();
+                        }
+                        else {
+                            html = "删除失败,原因:" + data.msg;
+                            part_alert(3, html, main_msg, 5000);
+                        }
+                    }
+                });
+            }
+        }
+        function getInfo(obj) {
+            id = obj.id;
+            $.ajax({
+                type: 'get',
+                url: '{% url 'checkout:api_getTestAPSetListInfo' %}',
+                data: {
+                    'id': id
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        rs = data.data;
+                        rsdata = '';
+                        for (i = 0; i < rs.length; i++) {
+                            rsdata += '<tr><td class="autobreak">' + rs[i]['id'] +'</td><td class="autobreak">' + rs[i]['args_remark'] +'</td><td class="autobreak">' + rs[i]['args_command'] +
+                                '</td><td class="autobreak">' + rs[i]['args_name'] + '</td><td class="autobreak">' + rs[i]['args_vales'] +
+                                '</td><td class="autobreak">' + rs[i]['args_operator'] + '</td><td class="autobreak">' + getLocalTime(rs[i]['update_time']) +
+                                '</td></tr>'
+                        }
+                        dataL = '<table id="superdconf" class="table table-bordered table-hover">' +
+                            '<thead><tr><th>ID</th><th>用例名称</th><th>操作指令</th><th>匹配项</th><th>期望值</th><th>操作人</th><th>更新时间</th></tr></thead>' +
+                            '<tbody class="autobreak">' + rsdata + '</tbody></table>';
+                        show_fuceng(2,'策略详情',dataL,getfcWidth())
+                    }
+                    else {
+                        html = "删除失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000);
+                    }
+                }
+            });
+        }
+        function addApSet() {
+           dev_model_id =  $('#dev_model').val();
+           testSetId =  $('#testSet').val();
+           $.ajax({
+                type: 'get',
+                url: '{% url 'checkout:api_addTestApSet' %}',
+                data: {
+                    'dev_model_id': dev_model_id,
+                    'testSetId': testSetId,
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        html = "新增成功";
+                        part_alert(1, html, main_msg, 5000);
+                        location.reload();
+                    }
+                    else {
+                        html = "新增失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000);
+                    }
+                }
+            });
+        }
+
+
+    </script>
+
+
+{% endblock %}

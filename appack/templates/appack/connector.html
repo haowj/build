@@ -1,0 +1,202 @@
+{% extends 'appack/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}连接器{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block content %}
+    <div class="row shead">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <button type="submit" class="btn btn-primary addsdc" onclick="jump('tag')">新增版本</button>
+                    <button type="submit" class="btn btn-primary addsdc" onclick="jump('conf')">新增配置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row new_conf" style="display: none">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">新增配置</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="col-lg-2">
+                        <span>设备型号：</span>
+                        <select class="dev_model form-control">
+                            {% for i in dev_model %}
+                                {% if i == 'fitall' %}
+                                    <option value="{{ i }}">适配所有型号</option>
+                                {% else %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+
+                    </div>
+                    <div class="col-lg-2">
+                        <span>连接器版本：</span>
+                        <select class="tag form-control">
+                            {% for i in tag %}
+                                <option value="{{ i }}">{{ i }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {#        <div class="col-lg-2">#}
+                    {#            <span>连接器类型：</span>#}
+                    {#            <select class="connector_type form-control">#}
+                    {#                {% for i in connector_type %}#}
+                    {#                    <option value="{{ i }}">{{ i }}</option>#}
+                    {#                {% endfor %}#}
+                    {#            </select>#}
+                    {#        </div>#}
+                    <div class="col-lg-2" id="content_f" style="width: auto;display: none">
+                        <span>公告板：</span>
+                        <pre id="content"></pre>
+                    </div>
+                    <div class="reason" style="margin-top: 3%;margin-left: 15px;clear:both;">
+                        <div>更新内容:</div>
+                        <textarea class="up_comment" style="width: 32%;height: 100px;"></textarea>
+                    </div>
+                    <div class="box-footer">
+                        <button type="submit" class="btn btn-primary" onclick="controller_add()">提交配置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="example1" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>版本</th>
+                            <th>文件</th>
+                            <th>MD5</th>
+                            <th>操作人</th>
+                            <th>备注</th>
+                            <th>时间</th>
+
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in history|dictsortreversed:"id" %}
+
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td>{{ i.supertack_version }}</td>
+                                <td>{{ i.supertack_file }}</td>
+                                <td>{{ i.md5 }}</td>
+                                <td>{{ i.user }}</td>
+                                <td>{{ i.comment }}</td>
+                                <td>{{ i.update_time }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+
+        $(document).ready(function () {
+
+            $('#example1').DataTable({
+                "destroy": true,
+                {#"scrollY": 300,#}
+                "scrollX": true,
+                "scrollCollapse": true,
+                "bPaginate": true,
+                "bLengthChange": true,
+                "bAutoWidth": true,
+                "aaSorting": [],
+                "order": [[ 0, "desc" ]]
+            });
+        });
+
+        function jump(type) {
+            if (type === 'tag') {
+                $(location).attr('href', '{% url 'appack:tag_add' %}');
+            }
+            else {
+                $(".shead").toggle();
+                $(".new_conf").toggle();
+                $("#table_id_wrapper").toggle()
+            }
+        }
+
+        function controller_add() {
+            show_part_loading();
+            tag = $(".tag").find("option:selected").val();
+            dev_model = $(".dev_model").find("option:selected").val();
+            connector_type = $(".connector_type").find("option:selected").val();
+            reason = $(".up_comment").val();
+            url = '/api/connector_add';
+            title = '配置详情';
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+            htm = '';
+            if (!reason) {
+                part_alert(3,'备注信息不能为空！',main_msg,5000)
+            } else {
+                $.ajax({                       //发起ajax请求
+                    type: 'get',
+                    url: url,
+                    data: {
+                        'tag': tag,
+                        'dev_model': dev_model,
+                        'connector_type': connector_type,
+                        'comment': reason,
+                        'ts': ts,
+                        'sign': sign_dt
+                    },
+                    contentType: 'application/json',
+                    success: function (data) {    //后端返回数据，是列表形式的
+                        hide_part_loading();
+                        if (data.code === 200) {
+                            html = "新增配置成功";
+                            part_alert(1,html,main_msg,5000);
+                            setTimeout(function () {
+                                $(location).attr('href', '{% url 'appack:connector' %}');
+                        }, 2000);
+
+                        }
+                        else {
+                            html = "新增配置失败,原因:" + data.msg;
+                            part_alert(3,html,main_msg,5000)
+                        }
+                        setTimeout(function () {
+                            box.hide(500);
+                            if (data.code === 200) {
+                                $(location).attr('href', '{% url 'appack:connector' %}');
+                            }
+                        }, 2000);
+
+
+                    }
+                });
+
+            }
+        }
+
+
+    </script>
+
+
+{% endblock %}

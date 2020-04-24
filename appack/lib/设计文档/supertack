@@ -1,0 +1,914 @@
+#!/bin/sh
+
+[ $# -ge 1 ] && eval "la=\$$#"; [ "$la" = "g" ] && set -x;
+bgt=$(date -Iseconds); pss=$(cat /proc/$$/stat | awk '{print $22}'); pss=$(expr $pss / 100);
+vrp='/var/run/'; mkdir -p $vrp
+pname=${0##*/}; keepingf="${vrp}.${pname}.keeping"
+pidf="${vrp}${pname}.pid"; lockd="${vrp}.${pname}.lockd/"
+
+f_keeping() {
+    [ -e "$keepingf" ] || echo -n > $keeping
+    nline=$(awk 'END {print NR}' $keepingf)
+    if [ $nline -gt 2000 ]; then
+        echo "$1" > $keepingf
+    else
+        echo "$1" >> $keepingf
+    fi
+}
+
+f_opts() {
+    [ $# -lt 1 ] && return 0
+    k=1; pcmdopt=''; bsn=0; argn=0
+    [ $# -ge 2 ] && bsn=$(expr $# - 1) && eval "bsa=\$$bsn"
+    for ARG in "$@"; do
+        if [ $k -eq $bsn ]; then
+            if [ "$bsa" != "d" ] || [ "$la" != "g" ]; then
+                pcmdopt="$pcmdopt $ARG"; argn=$(expr $argn + 1)
+            fi
+        elif [ $k -eq "$#" ]; then
+            if [ "$la" != "d" ]; then
+                pcmdopt="$pcmdopt $ARG"; argn=$(expr $argn + 1)
+            fi
+        else pcmdopt="$pcmdopt $ARG"; argn=$(expr $argn + 1)
+        fi
+        k=$(expr $k + 1)
+    done
+    [ $argn -eq $# ] && return 0 || return 66
+}
+
+f_opts "$@"
+if [ $? -ne 0 ]; then
+    $0 $pcmdopt </dev/null >/dev/null 2>&1 &
+    f_keeping "$(date -Iseconds) keeper $$ fork $!"
+    exit 0
+fi
+
+aptacker="$(cd ${0%/*} && pwd)/${0##*/}"
+
+f_pcf() {
+    cf="${pname}.cf"
+    if [ -e "$PWD/$cf" ]; then
+        pcf="$PWD/$cf"
+    elif [ -e "/etc/sapi/$cf" ]; then
+        pcf="/etc/sapi/$cf"
+    fi
+
+    [ -n "$pcf" ] && { . "$pcf"; }
+    return 0;
+}
+f_pcf
+
+f_vi() {
+    [ -z "$smp" ] && smp="/sapi/master/"
+    [ -z "$ssp" ] && ssp="/sapi/slave/"
+    [ -z "$bsp" ] && bsp="/bin/sapi/"
+    [ -z "$esp" ] && esp="/etc/sapi/"
+    [ -z "$tsp" ] && tsp="/tmp/sapi/"
+    mkdir -p "$tsp" || { echo "can't mkdir $tsp, return 62!"; return 62; }
+
+    [ -z "$cf_mln" ] && cf_mln=10 || { [ "$cf_mln" -le 0 ] && cf_mln=1; }
+    [ -z "$cf_mkn" ] && cf_mkn=15 || { [ "$cf_mkn" -le 0 ] && cf_mkn=1; }
+    [ -z "$cf_msn" ] && cf_msn=60 || { [ "$cf_msn" -le 0 ] && cf_msn=60; }
+    [ -z "$byc" ] && [ -s "/bin/sapiloader" ] && byc='y'
+    [ -s "/bin/sapiloader" ] && aploader="/bin/sapiloader" || aploader="${esp}sapiloader"
+}
+f_vi || { retc=$?; echo "Error: f_vi() $retc"; exit $retc; }
+
+plogf="${tsp}${pname}.log"
+
+runp="${tsp}run/"
+apsuperd="${tsp}run/superd"
+apsuperdcf="${tsp}run/superd.cf"
+apsuperdlog="${tsp}run/superd.log"
+apupdlog="${tsp}run/up_superd.log"
+proglogdn="proglog.superhcloud.com"
+spidf="/var/run/superd.pid"
+dlp="${tsp}download/"
+sosdn="sos.superhcloud.com"
+mpf="${smp}sapipack.tar.lzma"; spf="${ssp}sapipack.tar.lzma"
+
+g_oem=''; g_model=''; g_sn=''; g_fwv=''; g_fwt='';
+g_ttc=0; g_klc=0; g_spn=0; g_ttr=0; g_ras=0;
+g_gpc=0; g_dpc=0; g_loc=0; g_stc=0; g_cpx=0;
+g_cur=0; g_rss=0; g_rcd=0; g_lcd=0; g_siz=0;
+g_lof=''; g_rty=''; g_t2c=0;
+g_fn=''; g_srr=0; g_sdr=0; g_kdr=0; g_lor=0; g_usr=0; g_uxr=0;
+g_d=0; g_m=0; g_s=0; g_tsn=0; g_bgt=''; g_st5=''; g_sd5='';
+
+xopt="-s -L -w %{http_code}"
+xtime60="--connect-timeout 30 --max-time 60"
+xtime180="--connect-timeout 30 --max-time 180"
+xlogn=0; xsapimd5=''; xsapiurl=''; xrerr='';
+xgetb='';
+
+f_slv() {
+    [ ! -s "${aploader}" ] && echo "noloader" && return 0
+    [ -n "$byc" ] && { slv=$(${aploader} -v 2>&1) || slv="loaderx"; echo $slv; return 0; }
+    f_ver
+}
+
+f_ver() {
+    echo "2.5.921";
+}
+
+f_md5sum() {
+    [ -z "$1" ] && return 0;
+    if [ -s "$1" ]; then
+        md5=$(md5sum "$1" | awk '{print $1}')
+        [ "$2" = "short" ] && md5=$(awk -v s="$md5" 'BEGIN {print substr(s, 1, 7)}')
+        echo ${md5}
+    fi  
+}
+
+f_md5() {
+   f_md5sum "$1" "short"
+}
+
+f_sdv() {
+    [ -s "$apsuperd" ] || return 89
+    xv=$($apsuperd -v 2>&1)
+    [ $? -ne 0 ] && echo "superdx" && return 0
+    [ "$xv" = "superd_version" ] && echo "nover" || echo $xv
+}
+
+f_sdi() {
+    if [ -s "$spidf" ]; then
+        sdi=$(cat "$spidf")
+        if ps -ef | grep superd | grep -v grep | grep "$sdi" > /dev/null 2>&1 ; then
+            echo "$sdi"; return 0;
+        fi
+    fi
+    return 55
+}
+
+f_ft(){ [ -e "$1" ] && date -Iseconds -r "$1"; }
+
+f_bt() {
+    [ -s "$1" ] || return 59
+    xt=$($1 -V | grep '\[' | awk -F '<' '{print $2}' | awk -F '>' '{print $1}' 2>&1)
+    [ $? -eq 0 ] && awk -v s="$xt" 'BEGIN {gsub(" ", "T", s); print s}'
+}
+
+f_slt() {
+    [ -n "$byc" ] && f_bt "$aploader" || f_ft "$aploader"
+}
+
+f_query() {
+    mus=$(cat /proc/uptime | awk '{print int($1)}')
+
+    echo "w=t&oemcode=${g_oem}&dev_model=${g_model}&sn=${g_sn}&\
+fwv=${g_fwv}&fwt=${g_fwt}&pss=$pss&mus=$mus&\
+slv=$slv&stv=$stv&sdv=$sdv&sti=$$&sdi=$(f_sdi)&\
+ttc=$g_ttc&klc=$g_klc&mkn=$cf_mkn&spn=$g_spn&tsn=$g_tsn&ttr=$g_ttr&ras=$g_ras&\
+gpc=$g_gpc&dpc=$g_dpc&lof=$g_lof&loc=$g_loc&stc=$g_stc&cpx=$g_cpx&\
+rty=$g_rty&t2c=$g_t2c&cur=$g_cur&rss=$g_rss&rcd=$g_rcd&lcd=$g_lcd&siz=$g_siz&\
+fn=$g_fn&srr=$g_srr&lor=$g_lor&sdr=$g_sdr&kdr=$g_kdr&usr=$g_usr&uxr=$g_uxr&\
+mp5=$mp5&mpt=$mpt&sp5=$sp5&spt=$spt&sl5=$sl5&slt=$slt&st5=$st5&stt=$stt&\
+sd5=$sd5&sdt=$sdt&d=$g_d&m=$g_m&s=$g_s&byc=$byc&orw=$orw&bgt=$bgt&t=$(date -Iseconds)"
+}
+
+f_fsize() {
+    [ -z "$1" ] && return 59;
+    echo $(ls -l $1 | awk '{print $5}');
+}
+
+f_cpost() {
+    [ -z "$1" -o -z "$2" ] && return 59
+    url="$1"; upf="$2"
+    echo "curl -k ${xopt} ${xtime180} -F file=@$upf --url $url -o /dev/null"
+}
+
+f_cgets() {
+    [ -z "$1" -o -z "$2" ] && return 59
+    url="$1"; dlf="$2"
+    [ -n "$byc" ] && echo "$aploader -c 30 -r 180 -d $url -o $dlf" && return 0
+
+    certp="${esp}" && [ -d "${esp}cert" ] && certp="${esp}cert/"
+    certopt="--cert ${certp}sapiclient.crt --key ${certp}sapiclient.key --cacert ${certp}sapica.crt"
+    echo "curl $certopt $xopt $xtime180 --url $url -o $dlf"
+}
+
+f_plog() {
+    [ -z "$1" ] && return 59
+    [ $xlogn -eq 0 ] && { rm -rf $plogf; xlogn=1; }
+
+    if [ $xlogn -le $cf_mln ]; then
+        y="\n[$(date -Iseconds)] --------------($xlogn/$cf_mln)--------------"
+        [ -n "$2" ] && echo -e "$y\n$1"
+        [ -n "$3" ] && echo -e "$y\n$1" >> $plogf;
+    else
+        xlogn=1;
+        y="\n[$(date -Iseconds)] --------------($xlogn/$cf_mln)--------------"
+        [ -n "$2" ] && echo -e "$y\n$1"
+        [ -n "$3" ] && echo -e "$y\n$1" > $plogf;
+    fi
+
+    xlogn=$(expr $xlogn + 1)
+}
+
+f_log2f() {
+    f_plog "$1" "" "f"
+}
+
+f_log2m() {
+    f_plog "$1" "so" "f"
+}
+
+# $1: additional info
+f_logq2m() {
+    if [ -n "$1" ]; then
+        x="[$(date -Iseconds)](q) $1\n$(f_query)"
+    else
+        x="[$(date -Iseconds)](q) $(f_query)"
+    fi
+    f_log2m "$x"
+}
+
+f_sgb() {
+    [ -s "/bin/sapigetb" ] && echo "/bin/sapigetb" && return 0
+    [ -s "${bsp}sapigetb" ] && echo "${bsp}sapigetb" && return 0
+    echo "ERROR: sapigetb Not Found, return 56"; return 56;
+}
+
+f_getv() {
+    [ -z "$1" ] && return 0;
+    $xgetb | grep "^$1=" | awk -F '=' '{print $2}';
+}
+
+f_sapigetb() {
+    mkdir -p "${tsp}"; [ -z "$xgetb" ] && { xgetb=$(f_sgb) || return $?; }
+
+    g_oem=$(f_getv "oemcode"); g_model=$(f_getv "dev_model"); g_sn=$(f_getv "sn")
+    g_lan=$(f_getv "local_ifname"); g_wan=$(f_getv "wan_ifname")
+    g_fwv=$(f_getv "rom_ver"); g_fwt=$(f_getv "rom_build")
+
+    if [ -z "$g_fwt" ]; then
+        g_fwt=$(f_getv "rom_release_date");
+        g_fwt=$(awk -v s="$g_fwt" 'BEGIN {gsub(" ", "T", s); print s}')
+    fi
+
+    if [ -z "${g_oem}" ] || [ -z "${g_model}" ] || [ -z "${g_sn}" ] || \
+       [ -z "${g_lan}" ] || [ -z "${g_wan}" ] || [ -z "${g_fwv}" ] || [ -z "${g_fwt}" ]; then
+        return 65
+    else
+        return 0
+    fi
+}
+
+f_grep_superd() {
+    if ps -ef | grep superd | grep -v grep >/dev/null 2>&1; then
+        return 0
+    else
+        return 92
+    fi
+}
+
+f_stop_superd() {
+    echo "TRACE: Entry to lf_stop_superd"; g_fn='kd'; g_kdr=0;
+
+    f_grep_superd || { f_log2m "INFO: lf_stop_superd superd proc stopped"; return 0; }
+    killall superd; sleep 2;
+
+    f_grep_superd || { f_log2m "INFO: lf_stop_superd() killall superd, success, retc:$?"; return 0; }
+    killall -9 superd; sleep 2;
+
+    f_grep_superd || { f_log2m "INFO: lf_stop_superd() killall -9 superd, success, retc:$?"; return 0; }
+    echo "ERROR: lf_stop_superd() killall -9 superd, error"
+    g_kdr=88; return $g_kdr;
+}
+
+f_dms() {
+    [ -e ${apsuperd} ] && g_d=1 || g_d=0;
+    [ -e "$mpf" ] && g_m=1 || g_m=0;
+    [ -e "$spf" ] && g_s=1 || g_s=0;
+    [ $g_d -eq 0 ] && { echo "ERROR: lf_dms() ${apsuperd} Not Found"; return 89; }
+    if [ -z "$orw" ] && [ $g_m -eq 0 -a $g_s -eq 0 ]; then
+        echo "ERROR: lf_dms() mpf & spf Not Found"; return 84
+    fi
+    return 0
+}
+
+f_restart_superd() {
+    f_stop_superd || return $?
+    f_start_superd
+}
+
+f_start_superd()
+{
+    echo "TRACE: Entry to lf_start_superd() ${apsuperd}"; g_fn='sd'; g_sdr=0
+    sdi=$(f_sdi) && echo "INFO: superd ($sdi) has been running." && return 0
+
+    g_stc=$(expr ${g_stc} + 1)
+    f_dms || { g_sdr=$?; return $g_sdr; }
+    echo "INFO: ${apsuperd} -i ${g_lan}:${g_wan} -n ${g_sn} -o ${g_oem} -e ${g_model} -f $apsuperdcf &"
+    ${apsuperd} -i ${g_lan}:${g_wan} -n ${g_sn} -o ${g_oem} -e ${g_model} -f $apsuperdcf &
+    g_sdr=$?; newsdi=$!
+    [ $g_sdr -ne 0 ] && { echo "ERROR: superd exec error [$g_sdr]"; g_sdr=90; return $g_sdr; }
+    f_keeping "$(date -Iseconds) worker $$, newsdi $newsdi"
+
+    echo "INFO: start superd, sleep 5, then verify whether superd is running."
+    sleep 5
+    sdi=$(f_sdi); g_sdr=$?
+    [ $g_sdr -eq 0 ] && echo "INFO: superd ($sdi) start success." && return 0
+    echo "ERROR: superd start error [$g_sdr]"; g_sdr=91; return $g_sdr
+}
+
+# $1: by mpf or spf
+f_load_from_local_by() {
+    [ -z "$1" ] && echo "ERROR: where to load from?" && return 59
+    xp="$1"
+    echo "INFO: lf_load_from_local_by() ${xp}"
+    if [ ! -e ${xp} ]; then
+        g_lcd=79;
+        echo "ERROR: lf_load_from_local_by() g_lcd=${g_lcd} ${xp} Not Found!"
+        return ${g_lcd}
+    fi
+
+    mkdir -p "${tsp}"
+    cd "${tsp}"
+    rm -rf "${runp}"
+
+    tar -xaf $xp > /dev/null 2>&1 || tar -xf $xp > /dev/null 2>&1 || tar -xzf $xp > /dev/null 2>&1
+    retc=$?
+	if [ ${retc} -eq 0 ]; then
+	    echo "TRACE: lf_load_from_local_by() tar extract success."
+        [ ! -e "${runp}" ] && mv -f ${tsp}${g_model}/run ${tsp} > /dev/null 2>&1
+        xmodel=$(echo ${g_model} | sed -e 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')
+        [ ! -e "${runp}" ] && mv -f ${tsp}${xmodel}/run ${tsp} > /dev/null 2>&1
+        chmod u+x "${apsuperd}"
+        f_restart_superd
+    else
+        g_lcd=80;
+        echo "ERROR: tar extract retc:${retc}, g_lcd=${g_lcd} Do you support -xaf or -xf or -xzf mode?"
+        return ${g_lcd}
+    fi
+}
+
+# $1: url, required
+# $2: dlf, optional
+# $3: md5, optional
+# $4: gt0, optional
+f_download_file() {
+    echo "TRACE: Entry to lf_download_file(url:$1, dlf:$2, md5:$3, gt0:$4)"
+    xurl="$1"; argdlf="$2"; argmd5="$3"; gt0="$4"; [ "$argmd5" = "0" ] && argmd5="";
+    [ -z "${xurl}" ] && echo "You should: $0 download_file url [dlf] [md5] [gt0]" && return 59
+
+    mkdir -p "${dlp}"
+    if [ -z "${argdlf}" -o -d "${argdlf}" ]; then
+        dlf="/dev/null"
+    else
+        t_b="${argdlf##*/}"
+        if [ "${t_b}" = "${argdlf}" ]; then
+            dlf="${dlp}${argdlf}"
+        else
+            dlf="$argdlf"
+        fi
+        rm -f "${dlf}"
+    fi
+    echo "INFO: lf_download_file() dlf:${dlf}"
+
+    echo "INFO: lf_download_file() $(f_cgets $xurl $dlf)"
+    g_rss=0; g_lcd=0
+    hc=$($(f_cgets $xurl $dlf))
+    g_cur=$?; [ -n "$byc" ] && g_rss=200 || g_rss=$hc; g_siz=0
+
+    if [ ${g_cur} -eq 0 ]; then
+        [ -s "$dlf" ] && g_siz=$(f_fsize "$dlf")
+        echo "INFO: lf_download_file() ${dlf} size:${g_siz}"
+        if [ "$g_rss" = '200' ]; then
+            if [ -n "$argdlf" ] && [ -s "$dlf" ] && [ -n "$argmd5" ]; then
+                xmd5=$(f_md5sum "${dlf}"); retc=$?
+                echo "INFO: lf_download_file() ${dlf} calc md5:$xmd5, arg md5:$argmd5"
+                if [ $retc -ne 0 -o "$xmd5" != "$argmd5" ]; then
+                    g_lcd=81;
+                    echo "ERROR: lf_download_file() g_cur:${g_cur}, g_rss:$g_rss, md5 retc:$retc, g_lcd=${g_lcd}"
+                    return ${g_lcd}
+                fi
+            fi
+
+            if [ -n "$gt0" -a $g_siz -le 0 ]; then
+                g_lcd=54;
+                echo "ERROR: lf_download_file() g_cur:${g_cur}, g_rss:$g_rss, g_lcd:${g_lcd}"
+                return ${g_lcd}
+            fi
+
+            g_lcd=0; echo "INFO: lf_download_file ${dlf} download success"
+            return ${g_lcd}
+        else
+            g_lcd=67; echo "ERROR: lf_download_file g_rss=$g_rss, url=${xurl}, g_cur=${g_cur}, g_lcd=${g_lcd}"
+            return ${g_lcd};
+        fi
+    elif [ -n "$argdlf" ] && [ ! -e "${dlf}" ]; then
+        g_lcd=68; echo "ERROR: lf_download_file g_cur=${g_cur}, g_lcd=${g_lcd}, ${dlf} Not Found!"
+        return ${g_lcd};
+    else
+        g_lcd=69; echo "ERROR: lf_download_file g_cur=${g_cur}, g_lcd=${g_lcd}"
+        return ${g_lcd};
+	fi
+}
+
+# $1: getsapiurlf
+f_api_get_sapiurl() {
+    echo "TRACE: lf_api_get_sapiurl()"
+    [ -z "$1" ] && return 59;
+    xurl="https://${sosdn}/aps/get_sapiurl?$(f_query)"
+    f_download_file "$xurl" "$1" "" "yes"
+    retc=$?
+
+    if [ ${retc} -eq 0 ]; then
+        cat "$1";
+        echo "TRACE: lf_api_get_sapiurl() visit success!"
+        return 0
+    else
+        f_logq2m "ERROR: lf_api_get_sapiurl() visit retc:${retc}"
+        return ${retc}
+    fi
+}
+
+f_jparse() {
+    echo $1 | \
+    sed -e 's/[{}]//g' | \
+    sed -e 's/", "/","/g' | \
+    sed -e 's/" ,"/","/g' | \
+    sed -e 's/" , "/","/g' | \
+    sed -e 's/","/'\"---RECORDSEPERATOR---\"'/g' | \
+    awk -v RS='---RECORDSEPERATOR---' "\$1~/^\"$2\"/ {print}" | \
+    sed -e "s/\"$2\"://" | \
+    sed -e 's/^"//' -e 's/"$//'
+}
+
+# $1: getsapiurlf
+f_jparse_sapiurl() {
+    echo "TRACE: lf_jparse_sapiurl()"
+    [ -z "$1" ] && return 59;
+
+    sapiurl_json="$(cat "$1")"
+    echo "INFO: lf_jparse_sapiurl() json=${sapiurl_json}"
+
+    xsapiurl=$(f_jparse "${sapiurl_json}" 'url')
+    xsapimd5=$(f_jparse "${sapiurl_json}" 'md5')
+
+    g_rcd=$(f_jparse "${sapiurl_json}" 'code')
+    g_ras=$(f_jparse "${sapiurl_json}" 'retryafter')
+    xrerr=$(f_jparse "${sapiurl_json}" 'error')
+
+    echo "TRACE: lf_jparse_sapiurl() g_rcd=${g_rcd}, xsapiurl: ${xsapiurl}, xsapimd5=${xsapimd5}, g_ras=${g_ras}, xrerr=${xrerr}"
+
+    if [ -n "${g_rcd}" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# $1: url
+# $2: md5
+f_download_pack() {
+    echo "TRACE: lf_download_pack(url:$1, md5:$2)"
+    xurl="$1"; argmd5="$2"
+
+    _packdlf="${dlp}sapipack.downloaded"
+    f_download_file "${xurl}" "${_packdlf}" "$argmd5" "yes"
+    retc=$?
+
+    if [ ${retc} -eq 0 ]; then
+        echo "INFO: lf_download_pack() _packdlf=${_packdlf}, copy to ${mpf}, ${spf}"
+        cp -f "${_packdlf}" "${mpf}"
+        retc=$?
+        cp -f "${_packdlf}" "${spf}"
+        retc2=$?
+        if [ ${retc2} -eq 0 -o ${retc} -eq 0 ]; then
+            echo "INFO: lf_download_pack() copy to ${mpf} and ${spf}, cp success"
+            g_lcd=0;
+            return 0
+        else
+            echo "ERROR: lf_download_pack() copy to ${mpf}, retc:${retc}, ${spf}, retc:${retc2}"
+            g_lcd=82;
+            return ${g_lcd}
+        fi
+    else
+        return ${retc}
+	fi
+}
+
+f_getpack_from_net() {
+    echo "TRACE: lf_getpack_from_net()"
+    g_gpc=$(expr ${g_gpc} + 1)
+
+    getsapiurlf="${dlp}getsapiurlf"
+    rm -rf "$getsapiurlf"
+    f_api_get_sapiurl "$getsapiurlf"
+    if [ $? -ne 0 ]; then
+        if [ "${g_rss}" = '202' ] || [ "${g_rss}" = '429' ]; then
+            f_jparse_sapiurl "$getsapiurlf"
+            if [ $? -eq 0 ]; then
+                return 70;
+            else
+                return 71;
+            fi
+        elif [ "${g_rss}" = '423' ] || [ "${g_rss}" = '449' ] || [ "${g_rss}" = '451' ]; then
+            g_lcd=72;
+            return ${g_lcd};
+        else
+            g_lcd=73;
+            return ${g_lcd};
+        fi
+    fi
+
+    f_jparse_sapiurl "$getsapiurlf"
+    if [ $? -ne 0 ]; then
+        g_lcd=74;
+        return ${g_lcd};
+    fi
+
+    if [ -n "${xsapiurl}" -a -n "${xsapimd5}" ]; then
+        j=0
+        while [ $j -lt 3 ]; do
+            f_download_pack "${xsapiurl}" "${xsapimd5}"
+            retc=$?
+            g_dpc=$(expr ${g_dpc} + 1)
+            if [ ${retc} -eq 0 ]; then
+                return 0
+            fi
+            j=$(expr $j + 1)
+            sleep 120
+        done
+        g_lcd=85;
+        return ${retc}
+    else
+        g_lcd=75;
+        echo "ERROR: lf_getpack_from_net() g_lcd: ${g_lcd}, xsapiurl=${xsapiurl}, xsapimd5=${xsapimd5}"
+        return ${g_lcd};
+    fi
+}
+
+f_p1_to_p2() {
+    p1=$1
+    p2=$2
+    p1_md5=''
+    p2_md5=''
+    g_cpx=0
+
+    echo "TRACE: lf_p1_to_p2, ${p1}, ${p2}"
+	if [ -e ${p2} ]; then
+        p2_md5="$(f_md5sum ${p2})"
+    fi
+
+	if [ -e ${p1} ]; then
+        p1_md5="$(f_md5sum ${p1})"
+
+        if [ "${p1_md5}" != "${p2_md5}" ]; then
+            cp -f ${p1} ${p2}
+            g_cpx=1
+        fi
+    fi
+
+	echo "TRACE: lf_p1_to_p2, p1_md5=${p1_md5}, p2_md5=${p2_md5}"
+}
+
+f_load_pack() {
+    g_loc=$(expr ${g_loc} + 1)
+    g_lof='m'; f_load_from_local_by ${mpf}
+	if [ $? -eq 0 ]; then
+        f_p1_to_p2 ${mpf} ${spf}
+        return 0
+	else
+        g_lof='s'; f_load_from_local_by ${spf}
+        if [ $? -eq 0 ]; then
+            f_p1_to_p2 ${spf} ${mpf}
+            return 0
+        else
+            g_lof='n'; f_getpack_from_net || return $retc
+            f_load_from_local_by ${mpf}
+            if [ $? -eq 0 ]; then
+                f_p1_to_p2 ${mpf} ${spf}
+                return 0
+            else
+                f_load_from_local_by ${spf}
+	                if [ $? -eq 0 ]; then
+                    f_p1_to_p2 ${spf} ${mpf}
+                    return 0
+                else
+                    g_lcd=83;
+                    return ${g_lcd}
+                fi
+            fi
+        fi
+	fi
+}
+
+f_api_up_sapiloadstat() {
+    echo "TRACE: Entry to lf_api_up_sapiloadstat()"
+    xurl="https://${sosdn}/stat/up_sapiloadstat?$(f_query)"
+
+    echo "INFO: lf_api_up_sapiloadstat() $(f_cgets $xurl /dev/null)"
+    hc=$($(f_cgets $xurl "/dev/null")); g_cur=$?
+    echo "INFO: lf_api_up_sapiloadstat() g_cur:${g_cur}, hc:$hc"; g_fn=''
+}
+
+f_superd_running() {
+    echo "INFO: Entry to lf_superd_running"; g_fn='sr'; g_srr=0; f_dms
+
+    sdi=$(f_sdi); g_srr=$?
+    [ $g_srr -eq 0 ] && echo "INFO: lf_superd_running. superd ($sdi) is running." && return 0
+    echo "INFO: lf_superd_running. superd has stopped [$g_srr]"; return $g_srr
+}
+
+f_update_xadt() {
+    echo "TRACE: lf_update_xadt(url=$1, md5=$2)"
+    url="$1"; md5="$2";
+
+    updatexadtf=${dlp}updatexadtf
+    rm -f ${updatexadtf}
+    f_download_file "$url" "${updatexadtf}" "$md5" "yes"
+    retc=$?; g_fn='ux';
+
+    if [ ${retc} -eq 0 ]; then
+        echo "TRACE: lf_update_xadt() download success!"
+        echo "TRACE: lf_update_xadt() exec sysupgrade command"
+        g_uxr=0; f_api_up_sapiloadstat
+        sysupgrade ${updatexadtf}
+        return $?; # can't reach here. only for readability.
+    else
+        echo "ERROR: lf_update_xadt() download_file retc:$retc";
+        g_uxr=$retc; f_api_up_sapiloadstat
+        return $g_uxr;
+    fi
+}
+
+f_update_sapi() {
+    echo "TRACE: Entry to lf_update_sapi(url:$1, md5:$2)"
+    g_fn='us'; g_usr=0; url="$1"; md5="$2";
+
+    updatesapif="${dlp}updatesapif"
+    rm -f "${updatesapif}"
+    f_download_file "$url" "$updatesapif" "$md5" "yes"
+    retc=$?;
+    if [ ${retc} -eq 0 ]; then
+        f_api_up_sapiloadstat;
+        echo "TRACE: lf_update_sapi() download success!"
+        cp -f ${updatesapif} ${mpf}
+        echo "TRACE: lf_update_sapi() copy to ${mpf}, then rm -rf ${runp}"
+        rm -rf ${runp}; return 0;
+    else
+        echo "ERROR: lf_update_sapi() download_file retc:$retc"
+        g_usr=$retc; f_api_up_sapiloadstat;
+        return $g_usr;
+    fi
+}
+
+f_api_up_superdlog() {
+    zfile="${apupdlog}.gz"
+    rm -f "${zfile}"
+    echo "TRACE: lup_superdlog() ${apsuperdlog}"
+
+    if [ -s "${apsuperdlog}" ]; then
+        cp -f ${apsuperdlog} ${apupdlog}
+        cp -f /dev/null ${apsuperdlog}
+        gzip -f ${apupdlog}
+        if [ -s "${zfile}" ]; then
+            xurl="https://${proglogdn}/aps/up_superdlog?$(f_query)"
+            echo "lup_superdlog() $(f_cpost $xurl $zfile)"
+
+            g_rss=$($(f_cpost $xurl $zfile))
+            g_cur=$?; g_lcd=0;
+            if [ $g_cur -eq 0 -a "$g_rss" = '200' ]; then
+                echo "INFO: lup_superdlog() success!"; return 0;
+            else
+                echo "ERROR: lup_superdlog() g_cur:$g_cur, g_rss:$g_rss"
+                g_lcd=53; return $g_lcd;
+            fi
+        fi
+        g_lcd=58; return $g_lcd;
+    else
+        echo "TRACE: ${apsuperdlog} has zero size, no need to upload."
+        g_lcd=0; return $g_lcd;
+    fi
+}
+
+f_jparse_ticktackf() {
+    echo "TRACE: Entry to lf_parse_ticktack_json()"
+
+    _json=$(cat ${ticktackf})
+    echo "INFO: lf_parse_ticktack_json() json=${_json}"
+
+    g_rty=$(f_jparse "${_json}" 'type')
+    case "${g_rty}" in
+        1)
+        reboot -f || reboot
+        return $?
+        ;;
+        2)
+        g_t2c=$(expr $g_t2c + 1)
+        xurl=$(f_jparse "${_json}" 'url')
+        xmd5=$(f_jparse "${_json}" 'md5')
+        f_update_sapi "${xurl}" "${xmd5}"
+        return $?
+        ;;
+        4)
+        xurl=$(f_jparse "${_json}" 'url')
+        xmd5=$(f_jparse "${_json}" 'md5')
+        f_update_xadt "${xurl}" "${xmd5}"
+        return $?
+        ;;
+        5)
+        f_api_up_superdlog
+        return $?
+        ;;
+        6)
+        rm -rf $mpf; rm -rf $spf; rm -rf ${tsp}*
+        ;;
+    esac
+    return 0
+}
+
+f_api_ticktack() {
+    echo "TRACE: Entry to lf_api_ticktack()"
+
+    ticktackf=${dlp}ticktackf
+    rm -f ${ticktackf}
+    xurl="https://${sosdn}/aps/ticktack?$(f_query)"
+    f_download_file "$xurl" "$ticktackf"
+    retc=$?
+
+    if [ ${retc} -eq 0 ]; then
+        if [ -s "$ticktackf" ]; then
+            f_jparse_ticktackf ${ticktackf}
+            retc=$?
+            echo "INFO: lf_api_ticktack lf_jparse_ticktackf ${ticktackf}, retc=${retc}"
+        else
+            g_rty='';
+            echo "INFO: lf_api_ticktack ${ticktackf}, no content."
+        fi
+    else
+        echo "ERROR: lf_api_ticktack, retc=${retc}"
+    fi
+
+    rm -f ${ticktackf}
+    return ${retc}
+}
+
+f_ticktack() {
+    f_log2m "TRACE: Entry to lf_ticktack"; g_fn='tt'; f_dms
+    f_keeping "$(date -Iseconds) worker tt $$"
+
+    f_api_ticktack
+    g_ttr=$?
+    f_logq2m "INFO: api_ticktack g_ttr=${g_ttr}"
+    if [ ${g_ttr} -gt 100 ]; then
+        ttn=$(expr ${g_ttr} - 100)
+        g_tsn=$(expr ${ttn} '*' $cf_mkn '*' 60)
+        echo "INFO: sleep $g_tsn seconds."
+        sleep ${g_tsn}
+    fi
+}
+
+f_load() {
+    f_logq2m "INFO: Entry to load"; g_fn='lo'
+    f_load_pack; g_lor=$?
+
+    if [ ${g_lor} -eq 0 ]; then g_spn=0
+    elif [ ${g_lor} -eq 70 ]; then [ ${g_ras} -lt 180 ] && g_spn=180 || g_spn=${g_ras}
+    elif [ ${g_lor} -eq 71 ]; then g_spn=900
+    else [ ${g_lor} -eq 72 ] && g_spn=86400 || g_spn=300
+    fi
+}
+
+f_load_sleep() {
+    if [ $g_lor -eq 0 ]; then f_logq2m "INFO: load success"
+    else f_logq2m "ERROR: load error $g_lor";
+    fi
+
+    if [ $g_spn -gt 0 ]; then
+        f_logq2m "INFO: load sleeping $g_spn seconds";
+        f_api_up_sapiloadstat
+        sleep $g_spn; g_spn=0;
+    fi
+}
+
+slv=$(f_slv); stv=$(f_ver); sdv=$(f_sdv); sdi=$(f_sdi)
+sl5=$(f_md5 "${aploader}"); slt=$(f_slt)
+st5=$(f_md5 "${aptacker}"); stt=$(f_ft "$aptacker")
+sd5=$(f_md5 "${apsuperd}"); sdt=$(f_bt "$apsuperd")
+mp5=$(f_md5 "$mpf"); mpt=$(f_ft "$mpf")
+sp5=$(f_md5 "$spf"); spt=$(f_ft "$spf")
+g_st5=$st5; g_sd5=$sd5;
+
+f_newpg() {
+    st5=$(f_md5 "${aptacker}"); sd5=$(f_md5 "${apsuperd}")
+    [ "$st5" != "$g_st5" -o "$sd5" != "$g_sd5" ] && return 0
+    return 51
+}
+
+f_work() {
+    echo "INFO: lf_work() write new pid to file: echo $$ > ${pidf}"
+    echo $$ > "${pidf}"
+    f_keeping "$(date -Iseconds) new worker $$"
+
+    f_stop_superd || { retc=$?; f_log2m "ERROR: lf_work() stop_superd $retc, sleep 60"; sleep 60; return $retc; }
+
+    g_ttc=1; g_klc=1
+    while true
+    do
+        f_logq2m "ticktack=${g_ttc}, keepalive=$g_klc/$cf_mkn"
+
+        f_newpg && exit
+        f_superd_running
+        if [ $? -ne 0 ]; then
+            f_restart_superd; retc=$?
+            if [ $retc -ne 0 ] && [ -z "$orw" ]; then
+                f_load; f_load_sleep
+            else
+                if [ $g_kdr -eq 0 -a $g_sdr -eq 0 ]; then f_logq2m "INFO: start success"
+                else f_logq2m "ERROR: start error $g_kdr, $g_sdr";
+                fi
+            fi
+        fi
+
+        [ $g_klc -eq 1 ] && f_ticktack
+
+        f_logq2m "INFO: lf_start keepalive sleep $cf_msn seconds"
+        sleep $cf_msn
+
+        g_klc=$(expr $g_klc + 1)
+        [ $g_klc -gt $cf_mkn ] && { g_klc=1; g_ttc=$(expr ${g_ttc} + 1); }
+    done
+}
+
+f_usage() {
+    echo "USAGE: $pname [options]"
+    echo "       $pname - default to /etc/sapi"
+    echo "OPTIONS:"
+    echo "       start - start the service"
+    echo "       ver - print version"
+    echo "       help - print usage"
+}
+
+f_killex() {
+    [ -s "${pidf}" ] || return 0
+    fpid=$(cat ${pidf})
+    echo "${pidf} ($fpid)"
+    kill "$fpid"
+    kill -9 "$fpid"
+    echo "kill -9 $fpid return $?"
+    rm -rf "$pidf"
+}
+
+f_acquire() {
+    trap 'if [ -s "$pidf" ] && [ $(cat "$pidf") = "$$" ]; then { rm -rf "$lockd"; exit; }; fi' QUIT INT TERM EXIT
+    mkdir $lockd >/dev/null 2>&1 && return 0
+    postd="${vrp}.supertack.postd"
+    echo "WARNING: $lockd FOUND, let's check $postd"
+    mkdir $postd >/dev/null 2>&1 || return 52
+    if [ -s "$pidf" ]; then
+        nsti=$(cat "$pidf")
+        if ps -ef | grep $pname | grep -v grep | grep "$nsti" > /dev/null 2>&1 ; then
+            echo "WARNING: $lockd FOUND, $pname $nsti alive"
+            rm -rf $postd
+            return 57
+        fi
+    fi
+    rm -rf $postd; return 0
+}
+
+f_restart() {
+    f_acquire || f_killex
+    f_logq2m "INFO: restarting"
+    f_work;
+}
+
+f_start() {
+    f_acquire || { f_keeping "$(date -Iseconds) poller $$ [$?]"; return 0; }
+    f_logq2m "INFO: starting"
+    f_work;
+}
+
+f_init() {
+    f_sapigetb || { retc=$? && echo "Error: f_sapigetb $retc, sleep 1 min" && sleep 60 && return $retc; }
+    f_dms; return 0
+}
+
+f_init || exit $?
+[ "$2" = "onlyrun" ] && orw="y"
+case "$1" in
+    'start')
+    f_start;;
+
+    'restart')
+    f_restart;;
+
+    'update_sapi')
+    f_update_sapi ;;
+
+    'stop-superd')
+    f_stop_superd ;;
+
+    'v'|'ver'|'version'|'stv') f_ver ;;
+
+    '-h'|'h'|'--help'|'help') f_usage ;;
+
+    '-s'|'s') ;;
+
+    *) exit 61 ;;
+esac
+

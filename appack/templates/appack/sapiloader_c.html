@@ -1,0 +1,168 @@
+{% extends 'appack/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}加载器(C){% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <button type="submit" class="btn btn-primary addsdc" onclick="jump()">构建</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">构建成功列表(C)</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="example1" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>型号</th>
+                            <th>版本</th>
+                            <th>URL</th>
+                            <th>MD5</th>
+                            <th>构建结果</th>
+                            <th>构建说明</th>
+                            <th>操作人</th>
+                            <th>更新时间</th>
+
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in sdata %}
+
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td><a href="{{ i.download_url }}">{{ i.dev_model }}</a></td>
+                                <td>{{ i.sapiloaderC_version }}</td>
+                                <td>{{ i.download_url }}</td>
+                                <td>{{ i.md5 }}</td>
+                                <td>{{ i.build_result }}</td>
+                                <td>{{ i.build_reason }}</td>
+                                <td>{{ i.user }}</td>
+                                <td>{{ i.update_time }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">构建日志(C)</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="example2" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>型号</th>
+                            <th>版本</th>
+                            <th>状态</th>
+                            <th>原因</th>
+                            <th>时间</th>
+                            <th>操作</th>
+
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in bldata %}
+
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td>{{ i.dev_model }}</td>
+                                <td>{{ i.build_tag }}</td>
+                                <td>{{ i.build_status }}</td>
+                                <td>{{ i.build_reason }}</td>
+                                <td>{{ i.update_time }}</td>
+                                <td><a type="button" class="detail" id="{{ i.id }}" onclick="getInfo(this)">查看详情</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block js_fun %}
+    <script>
+        $('#example1').DataTable({
+            "destroy": true,
+            {#"scrollY": 300,#}
+            {#"scrollX": true,#}
+            "scrollCollapse": true,
+            "bPaginate": true,
+            "bLengthChange": true,
+            "bAutoWidth": true,
+            "aaSorting": [],
+            "order": [[ 0, "desc" ]]
+        });
+        $('#example2').DataTable({
+            "order": [[ 0, "desc" ]]
+        });
+
+        function jump() {
+            $(location).attr('href', '{% url 'appack:sapiloader_c_build' %}');
+        }
+
+        function getInfo(that) {
+            show_part_loading(main_msg);
+            id = that.id;
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+            $.ajax({                       //发起ajax请求
+                type: 'get',
+                url: '/api/build_info/',
+                data: {
+                    'id': id,
+                    'ts': ts,
+                    'sign': sign_dt
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    hide_part_loading(main_msg);
+
+                    if (data.code === 200) {
+                        da = data.data;
+                        htm = '';
+                        for (i = 0; i < da.length; i++) {
+                            htm += da[i];
+                        }
+
+                        $(".win_head_title").val('').html('构建详情');
+                        $(".win_detail").val('').html(htm);
+                        $('.win_backgroud').toggle()
+
+                    }
+                    else {
+                        html = "新增配置失败,原因:" + data.msg;
+                        part_alert(3,html,main_msg,5000)
+                    }
+
+                }
+            });
+        }
+
+    </script>
+
+{% endblock %}

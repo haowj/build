@@ -1,0 +1,84 @@
+{% extends 'appack/index.html' %}
+{% load staticfiles %}
+
+{% block title %}注册鉴权{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block content %}
+    <div class="form-group " style="float:left">
+        <select class="form-control dev_model">
+            <option>请选择型号</option>
+            {% for i in dev_model %}
+                <option>{{ i }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group col-lg-3">
+        <label class="sr-only" for="name">SN</label>
+        <input type="text" class="form-control sn" id="name" placeholder="请输入SN">
+    </div>
+     <div class="form-group " style="float:left">
+        <select class="form-control result">
+            <option>请选择鉴权结果</option>
+                <option>True</option>
+                <option>False</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-default submit" onclick="ajax()">提交</button>
+
+    <div class="result_co " style="position: absolute;margin-top:10px;width: 500px">
+
+    </div>
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+
+        function ajax() {
+            $("#loading_father").show();
+            dev_model = $(".dev_model").find("option:selected").text();
+            result = $(".result").find("option:selected").text();
+            sn = $(".sn").val();
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+            if (request==='请选择鉴权结果'){
+                alert('请选择鉴权结果');
+            }
+            data = {
+                'dev_model':dev_model,
+                'result':result,
+                'sn':sn,
+                'ts':ts,
+                'sign':sign_dt
+            };
+
+            $.get("/api/authadd/", data, function (res) {
+                $("#loading_father").hide();
+                if (res.code === 200 ) {
+                    data = res.data.data;
+                    $(".result_co").text(data);
+                    html = "提交成功。";
+                    box = $(".box-success");
+                    message = $(".box-body-success");
+                    a = 200
+                } else {
+                    box = $(".box-danger");
+                    message = $(".box-body-danger");
+                    html = "提交失败，原因:" + res.msg;
+                    $(".result_co").text(html);
+                }
+
+                    if (message.val()) {
+                        message.empty();
+                    }
+
+                    message.html(html);
+                    box.show(500);
+                    setTimeout(function () {
+                        box.hide(500);
+                    }, 2000);
+            });
+        }
+    </script>
+
+
+{% endblock %}

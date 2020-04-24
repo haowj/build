@@ -1,0 +1,13 @@
+*.py[cod]
+gunicorn.pid
+.idea
+*/*/.idea
+upload
+nohup.out
+package
+*$py.class
+.DS_Store
+*/*/.DS_Store
+log
+log*
+venv

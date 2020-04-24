@@ -1,0 +1,215 @@
+{% extends 'appack/index.html' %}
+{% load staticfiles %}
+{% block page_title %}构建{% endblock %}
+{% block content %}
+    <div class="row build_fun">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">构建插件</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="form-horizontal">
+
+                        <div class="col-lg-2">
+                            <span>设备型号：</span>
+                            <select class="dev_model form-control">
+                                {% for i in dev_model %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                {% endfor %}
+                            </select>
+
+                        </div>
+                        <div class="col-lg-2">
+                            <span>插件版本：</span>
+                            <select class="tag form-control">
+                                {% for i in tag %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="reason" style="margin-top: 3%;margin-left: 15px;clear:both;">
+                        <div>更新内容:</div>
+                        <textarea class="up_comment" style="width: 32%;height: 100px;"></textarea>
+                    </div>
+                    <div class="box-footer">
+                        <button type="submit" class="btn btn-primary addsdc" onclick="build()">提交构建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row build_status">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">构建进度</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table class="table table-striped" id="chart_table">
+                        <thead>
+                        <tr>
+                            <th style="width: 10%">型号</th>
+                            <th style="width: 10%">构建版本</th>
+                            <th>进度</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td class="apmodel"></td>
+                            <td class="version"></td>
+                            <td class="progres">
+                                <div id="prog_out" class="progress progress-striped active">
+                                    <div id="prog_in" class="progress-bar progress-bar-success" role="progressbar"
+                                         aria-valuenow="20"
+                                         aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
+                                    </div>
+
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block js_fun %}
+    <script>
+        $(document).ready(function () {
+            getadvertising('全局', '构建', 'content', 'content_f');
+            main_msg='.main-msg';
+        });
+
+        num = randomNum(1, 5);
+        function submit_build_status_query() {
+
+            prog_in = $('#prog_in');
+            prog_in.width(num + '%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+            prog_in.html(num + '%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+            dev_model = $(".dev_model").find("option:selected").text();
+            tag = $(".tag").find("option:selected").text();
+            reason = $(".up_comment").val();
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+            sitv = setInterval(function () {
+                prog_url = "/api/superd_build_result/?dev_model=" + dev_model + "&tag=" + tag + "&reason=" + reason + "&ts=" + ts + "&sign=" + sign_dt;
+                // prog_url指请求进度的url，后面会在django中设置
+                $.getJSON(prog_url, function (res) {
+
+                    prog_in.width(num + '%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+                    if (prog_in.val()) {
+                        prog_in.empty();
+                    }
+                    prog_in.html(num + '%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+                    add_num = randomNum(2, 10);
+                    num = num + add_num;
+                    if (res.data === 200) {
+                        $('#prog_out').attr("class", "progress progress-bar-success"); // 修改进度条外层div的class, 改为完成形态
+                        prog_in.html('100%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+                        clearInterval(sitv);                   // 此时请求成功返回结果了，结束对后台进度的查询
+                        setTimeout(function () {
+                            $(location).attr('href', '{% url 'appack:superd' %}');
+                        }, 2000);
+
+                    } else if (num > 100) {
+                        html = "构建超时，不再等待。";
+                        box = $(".box-danger");
+                        message = $(".box-body-danger");
+
+                        if (message.val()) {
+                            message.empty();
+                        }
+                        message.html(html);
+                        box.show(500);
+                        prog_in.width('0%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+                        setTimeout(function () {
+                            box.hide(500);
+                            $(location).attr('href', '{% url 'appack:superd' %}');
+                        }, 2000);
+                    } else if (res.data === 400) {
+                        html = "构建失败！";
+                        box = $(".box-danger");
+                        message = $(".box-body-danger");
+
+                        if (message.val()) {
+                            message.empty();
+                        }
+                        message.html(html);
+                        box.show(500);
+                        prog_in.width('0%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+                        setTimeout(function () {
+                            box.hide(500);
+                            $(location).attr('href', '{% url 'appack:superd_build' %}');
+                        }, 5000);
+                    }
+                });
+            }, 1000);                                 // 每1秒查询一次后台进度
+
+        }
+
+        function build() {
+            jenkins_info = $(".jenkins_info");
+            dev_model = $(".dev_model").find("option:selected").text();
+            tag = $(".tag").find("option:selected").text();
+            reason = $(".up_comment").val();
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+
+            if (reason.length < 5) {
+                part_alert(3,'更新内容应该大于5个字。',main_msg,5000)
+            } else {
+                data = {
+                    'dev_model': dev_model,
+                    'tag': tag,
+                    'reason': reason,
+                    'ts': ts,
+                    'sign': sign_dt
+                };
+                ajax(data)
+            }
+
+        }
+
+        function ajax(data) {
+            $.get("/api/superd_build/", data, function (res) {
+                if (res.code === 200) {
+                    html = "已经开始构建，请稍后。";
+                    part_alert(1,html,main_msg,3000);
+                    $(".build_fun").hide();
+                    a = 200
+                } else {
+                    html = "构建失败,原因:" + res.msg;
+                    part_alert(2,html,main_msg,3000);
+                    a = 400
+                }
+
+                setTimeout(function () {
+                    if (a !== 400) {
+                        submit_build_status_query()
+                    } else {
+                        location.reload()
+                    }
+                }, 2000);
+
+                apModel = $(".apmodel");
+                version = $(".version");
+                if (apModel.val()) {
+                    apModel.empty()
+                }
+                if (version.val()) {
+                    version.empty()
+                }
+                apModel.html(data.dev_model);
+                version.html(data.tag);
+
+            });
+        }
+    </script>
+{% endblock %}

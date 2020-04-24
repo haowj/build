@@ -1,0 +1,242 @@
+.loading_ {
+    display: none;
+    position: fixed;
+    left: 3%;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+.loadEffect {
+    width: 100px;
+    height: 100px;
+    position: fixed;
+    margin: 0 auto;
+    margin-top: 200px;
+    margin-left: 40%;
+}
+
+.loadEffect span {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: lightgreen;
+    position: absolute;
+    -webkit-animation: load 1.04s ease infinite;
+}
+
+@-webkit-keyframes load {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.2;
+    }
+}
+
+.loadEffect span:nth-child(1) {
+    left: 0;
+    top: 50%;
+    margin-top: -8px;
+    -webkit-animation-delay: 0.13s;
+}
+
+.loadEffect span:nth-child(2) {
+    left: 14px;
+    top: 14px;
+    -webkit-animation-delay: 0.26s;
+}
+
+.loadEffect span:nth-child(3) {
+    left: 50%;
+    top: 0;
+    margin-left: -8px;
+    -webkit-animation-delay: 0.39s;
+}
+
+.loadEffect span:nth-child(4) {
+    top: 14px;
+    right: 14px;
+    -webkit-animation-delay: 0.52s;
+}
+
+.loadEffect span:nth-child(5) {
+    right: 0;
+    top: 50%;
+    margin-top: -8px;
+    -webkit-animation-delay: 0.65s;
+}
+
+.loadEffect span:nth-child(6) {
+    right: 14px;
+    bottom: 14px;
+    -webkit-animation-delay: 0.78s;
+}
+
+.loadEffect span:nth-child(7) {
+    bottom: 0;
+    left: 50%;
+    margin-left: -8px;
+    -webkit-animation-delay: 0.91s;
+}
+
+.loadEffect span:nth-child(8) {
+    bottom: 14px;
+    left: 14px;
+    -webkit-animation-delay: 1.04s;
+}
+
+#content_f {
+    max-width: 400px;
+    min-width: 200px;
+    color: red;
+}
+
+.userInfo {
+    float: left;
+    /*color: white;*/
+    margin-top: 2px;
+}
+
+.table-container {
+    width: 100%;
+    overflow-y: auto;
+    _overflow: auto;
+    margin: 0 0 1em;
+}
+
+table {
+    border: 0;
+    border-collapse: collapse;
+}
+
+table td, table th {
+    padding: .5em 1em
+}
+
+table tr td, table tr th {
+    white-space: nowrap;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    border: 3px solid #fff;
+    background-color: rgba(0, 0, 0, .3);
+}
+
+/*{#loading框#}*/
+
+/*{#弹窗#}*/
+
+.win_backgroud {
+    z-index: 999;
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.win_body {
+    position: fixed;
+    background: #eeeeee;
+    width: 70%;
+    left: 18%;
+    margin: 7% auto;
+    overflow: auto;
+}
+
+.win_head {
+    color: white;
+    padding: 5px;
+    background: #408EBA;
+}
+
+.win_content {
+    background: #eeeeee;
+    margin: auto;
+    height: auto;
+    max-height: 500px;
+    padding: 0 20px;
+}
+
+.win_close_button {
+    float: right;
+    font-size: 20px;
+    margin-right: 10px;
+    width: 20px;
+    cursor: pointer;
+}
+
+.win_head_title {
+    margin: 10px 0;
+    color: white;
+    padding-left: 15px;
+}
+
+.win_title {
+    margin: 0 0;
+    padding-top: 15px;
+}
+
+.win_foot {
+    padding: 5px 0;
+    text-align: center;
+    color: white;
+}
+
+.button_div {
+    margin-top: 120px;
+}
+
+.button { /* 按钮美化 */
+    width: auto; /* 宽度 */
+    height: 40px; /* 高度 */
+    border-width: 0; /* 边框宽度 */
+    border-radius: 3px; /* 边框半径 */
+    background: #1E90FF; /* 背景颜色 */
+    cursor: pointer; /* 鼠标移入按钮范围时出现手势 */
+    outline: none; /* 不显示轮廓线 */
+    color: white; /* 字体颜色 */
+    font-size: 17px; /* 字体大小 */
+}
+
+.button:hover { /* 鼠标移入按钮范围时改变颜色 */
+    background: #5599FF;
+}
+/*全局浮层窗体样式*/
+#row-main {
+    display: none;
+    position: fixed;
+    top: 50px;
+    left: 25%;
+    width: 60%;
+}
+
+.little—hands{
+    cursor:pointer;
+}
+pre {
+    border-radius: 4px !important;
+    background-color: white !important;
+    border:0 !important;
+    line-height: 20px !important;
+}
+.release{
+            cursor:pointer;
+        }
+.pointer{
+    cursor: pointer;
+}
+.autobreak{
+    word-wrap:break-word;
+    overflow:auto;
+    white-space: normal;
+}
+
+.autoscroll{
+    overflow:scroll !important;
+}

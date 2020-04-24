@@ -1,0 +1,570 @@
+{% extends 'dataplatform/index.html' %}
+{% load staticfiles %}
+{% block page_title %}虚拟数据管理{% endblock %}
+{% block content %}
+    <div class="row shead">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <button type="submit" class="btn btn-primary add_phone_submit" onclick="jump()">新增配置</button>
+                    <button type="submit" class="btn btn-primary back_previous" onclick="backPrevious()"
+                            style="display: none">返回
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--展示手机号信息 -->
+    <div class="row table_id_wrapper">
+        <div class="col-md-12 virtualInfo_body">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">手机信息列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="virtualInfo" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>手机号码</th>
+                            <th>号码类型</th>
+                            <th>账户数量</th>
+                            <th>使用人</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in data %}
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td>{{ i.phoneNumber }}</td>
+                                <td>{{ i.phoneType }}</td>
+                                <td><a type="button" class="detail" id="{{ i.phoneNumber }}" name="{{ i.id }}"
+                                       onclick="getInfo(this)">数量：{{ i.applicationsNumber }}</a></td>
+                                <td>{{ i.utilizeUser }}</td>
+                                <td><a type="button" class="btn btn-sm btn-primary btn-xs" id="{{ i.id }}"
+                                       name="{{ i.phoneNumber }}{{ i.phoneType }}{{ i.utilizeUser }}"
+                                       onclick="alterPhone(this)">修改</a>
+                                    <a type="button" class="btn btn-sm btn-primary btn-xs" id="{{ i.id }}"
+                                       onclick="delPhone(this)">删除</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 detailedInfo_body" style="display: none">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">应用账户信息列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="detailedInfo" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>手机号码</th>
+                            <th>账户类型</th>
+                            <th>应用名称</th>
+                            <th>应用账号</th>
+                            <th>账号密码</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody class="phoneInfo">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--新增手机号-->
+    <div class="row new_conf" style="display:none">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">新增手机号</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="col-md-2">
+                        <input class="input-text phone_number" placeholder="手机号码" style="line-height: 28px">
+                    </div>
+                    <div class="col-md-2">
+                        <select id="phone_type_info" class="form-control" data-size="5" style="width: 100%">
+                            <option value="中国移动">中国移动</option>
+                            <option value="中国电信">中国电信</option>
+                            <option value="中国联通">中国联通</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input class="input-text utilize_user" placeholder="使用人" style="line-height: 28px">
+                    </div>
+
+                </div>
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-primary  addsdc" onclick="addPhoneNumber()">提交</button>
+                    <button type="submit" class="btn btn-primary addsdc" onclick="backPrevious()">返回</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!--新增应用账户-->
+    <div class="row add_app_user_info" style="display:none">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">新增应用账户信息</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="col-md-2">
+                        <input class="input-text add_phone_number" placeholder="手机号码" style="line-height: 28px" disabled="disabled">
+                    </div>
+                    <div class="col-md-2">
+                        <select id="phone_app_type" class="form-control" data-size="5" style="width: 100%">
+
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="phone_app_info" class="form-control" data-size="5" style="width: 100%">
+
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input class="input-text app_user" placeholder="账户" style="line-height: 28px">
+                    </div>
+                    <div class="col-md-2">
+                        <input class="input-text app_passwd" placeholder="密码" style="line-height: 28px">
+                    </div>
+                </div>
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-primary  addsdc" onclick="commitAppData()">提交</button>
+                    <button type="submit" class="btn btn-primary addsdc" onclick="backAppInfo()">返回</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block js_fun %}
+    <script>
+        $(document).ready(function () {
+            $('#virtualInfo').DataTable({
+                "order": [[0, "desc"]]
+            });
+            $('#detailedInfo').DataTable({
+                "order": [[0, "desc"]]
+            });
+            $("#phone_app_info").select2({
+                placeholder: '请选择应用',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+            $("#alter_phone_app_info").select2({
+                placeholder: '请选择应用',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+            $("#fuceng_footer_right").click(function () {
+                var html = '';
+                var id = $("#alter_phone_e").attr("name");
+                var phoneNumber = $(".phone_number").val();
+                var phoneType = $("#phone_type_info").val();
+                var utilizeUser = $(".utilize_user").val();
+                if (!(/^1[3456789]\d{9}$/.test(phoneNumber))) {
+                    alert("手机号码有误，请重填");
+                    return false;
+                }
+                $.ajax({
+                type: 'get',
+                url: '/dataplatform/alterPhoneNumber/',
+                data: {
+                    'ids': id,
+                    'phoneNumber': phoneNumber,
+                    'phoneType': phoneType,
+                    'utilizeUser': utilizeUser
+                },
+                contentType: 'application/json',
+                success: function (data) {
+                    if (data.code === 200) {
+                        $('.modal').modal('hide');
+                        html = "修改成功";
+                        part_alert(1, html, main_msg);
+                        setTimeout(function () {
+                            $(location).attr('href', '{% url 'dataplatform:getphone' %}');
+                        }, 2000);
+                    } else {
+                        html = "修改失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000)
+                    }
+                }
+                });
+            });
+            $("#alter_phone_application").click(function () {
+                var html = '';
+                var ids = $(".alter_app_passwd").attr("id");
+                var alter_phone_app_type = $("#alter_phone_app_type").val();
+                var alter_phone_app_info = $("#alter_phone_app_info").val();
+                var alter_app_user = $(".alter_app_user").val();
+                var alter_app_passwd = $(".alter_app_passwd").val();
+                var obj = $(".alter_phone_number")[0];
+                console.log(obj);
+                $.ajax({
+                    type: 'get',
+                    url: '/dataplatform/alterPhoneAppInfo/',
+                    data: {
+                        'ids': ids,
+                        'alter_phone_app_type': alter_phone_app_type,
+                        'alter_phone_app_info': alter_phone_app_info,
+                        'alter_app_user': alter_app_user,
+                        'alter_app_passwd': alter_app_passwd
+                    },
+                    contentType: 'application/json',
+                    success: function (data) {
+                        if (data.code === 200) {
+                        $('.modal').modal('hide');
+                        html = "修改成功";
+                        part_alert(1, html, main_msg);
+                        setTimeout(function () {
+                            getInfo(obj);
+                        }, 2000);
+                        } else {
+                            html = "修改失败,原因:" + data.msg;
+                            part_alert(3, html, main_msg, 5000)
+                        }
+                    }
+                });
+            });
+        });
+        var main_msg = ".main-msg";
+        var ts = getTimeStamp();
+        var sign_dt = sign(ts);
+
+        function backPrevious() {
+            $(location).attr('href', '{% url 'dataplatform:getphone' %}');
+        }
+
+        function getInfo(obj) {
+            show_part_loading();
+            var id = obj.id;
+            var name = obj.name;
+            $(".add_phone_number").attr("name", name);
+            $.ajax({
+                url: '/dataplatform/getAppInfo/',
+                type: 'get',
+                data: {
+                    'ids': id,
+                    'ts': ts,
+                    'sign': sign_dt
+                },
+                contentType: 'application/json',
+                success: function (data) {
+                    if (data.code === 200) {
+                        hide_part_loading();
+                        var html = '';
+                        $(".detailedInfo_body").attr("style", "display: inline");
+                        $(".back_previous").attr("style", "display: inline");
+                        $(".virtualInfo_body").attr("style", "display: none");
+                        $(".add_phone_submit").attr("onclick", "addApplication("+id+")");
+                        $.each(data.data, function (index, item) {
+                            html += "<tr>" +
+                                "<td>" + item.id + "</td>" +
+                                "<td>" + item.phoneNumber + "</td>" +
+                                "<td>" + item.applicationsType + "</td>" +
+                                "<td>" + item.applicationsName + "</td>" +
+                                "<td>" + item.applicationsUser + "</td>" +
+                                "<td>" + item.applicationsPass + "</td>" +
+                                "<td><a type='button' class='btn btn-sm btn-primary btn-xs' id=" + item.id + " onclick='alterPhoneAppl(this)'>修改</a>" +
+                                "<a type='button' class='btn btn-sm btn-primary btn-xs' id=" + item.id + " onclick='delApp(this,"+ name +")'> 删除</a></td>" +
+                                "</tr>"
+                        });
+                        $(".phoneInfo").html(html);
+                    }
+                    else {
+                        html = "查询失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000)
+                    }
+                }
+            });
+        }
+
+        function jump() {
+            $(".table_id_wrapper").attr("style", "display: none");
+            $(".shead").attr("style", "display: none");
+            $(".new_conf").attr("style", "display: inline")
+        }
+
+        function addPhoneNumber() {
+            var phoneNumber = $(".phone_number").val();
+            var phoneType = $("#phone_type_info").val();
+            var utilizeUser = $(".utilize_user").val();
+            var html = '';
+            if (!(/^1[3456789]\d{9}$/.test(phoneNumber))) {
+                alert("手机号码有误，请重填");
+                return false;
+            }
+            show_part_loading();
+            $.ajax({
+                type: 'get',
+                url: '/dataplatform/setPhoneNumber/',
+                data: {
+                    'phoneNumber': phoneNumber,
+                    'phoneType': phoneType,
+                    'utilizeUser': utilizeUser
+                },
+                contentType: 'application/json',
+                success: function (data) {
+                    if (data.code === 200) {
+                        hide_part_loading();
+                        html = "添加成功";
+                        part_alert(1, html, main_msg);
+                        setTimeout(function () {
+                            $(location).attr('href', '{% url 'dataplatform:getphone' %}');
+                        }, 2000);
+                    } else {
+                        html = "添加失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000)
+                    }
+                }
+            });
+        }
+
+        function alterPhone(obj) {
+            var id = obj.id;
+            var data = obj.name;
+            var phoneNumber = data.slice(0, 11);
+            var phoneType = data.slice(11, 15);
+            var utilizeUser = data.slice(15);
+            var selected = '';
+            if (phoneType === "中国移动"){
+                selected += '<option selected="selected" value="中国移动">中国移动</option>' +
+                            '<option value="中国电信">中国电信</option>' +
+                            '<option value="中国联通">中国联通</option>'
+            }else if(phoneType === "中国电信"){
+                selected += '<option selected="selected" value="中国电信">中国电信</option>' +
+                            '<option value="中国移动">中国移动</option>' +
+                            '<option value="中国联通">中国联通</option>'
+            }else if(phoneType === "中国联通"){
+                selected += '<option selected="selected" value="中国联通">中国联通</option>' +
+                            '<option value="中国移动">中国移动</option>' +
+                            '<option value="中国电信">中国电信</option>'
+            }
+            var html = '<div class="box-body" id="alter_phone_e" name='+id+'><div class="col-md-2">' +
+                '<input class="input-text phone_number" placeholder="手机号码" style="line-height: 28px" value='+phoneNumber+'></div>' +
+                '<div class="col-md-2">' +
+                '<select id="phone_type_info" class="form-control" data-size="5" style="width: 100%">'+ selected +'</select></div>' +
+                '<div class="col-md-2">' +
+                '<input class="input-text utilize_user" placeholder="使用人" style="line-height: 28px" value='+utilizeUser+'>' +
+                '</div> </div>';
+            show_fuceng(1,'手机号信息修改',html ,getfcWidth(), '关闭', '修改')
+
+        }
+        function delApp(obj, ids) {
+            var id = obj.id;
+            var html = '';
+            if (confirm("确定要删除应用账号[ID:"+id+ "]吗？")){
+                $.ajax({
+                    type: 'get',
+                    url: '/dataplatform/deleteApp/',
+                    data:{
+                        'ids': id
+                    },
+                    contentType: 'application/json',
+                    success: function (data) {
+                        if (data.code === 200){
+                            html = "删除成功";
+                            part_alert(1, html, main_msg, 5000);
+                            getInfo(ids);
+                        }else{
+                            html = "删除失败,原因:" + data.msg;
+                            part_alert(3, html, main_msg, 5000);
+                        }
+                    }
+                });
+            }
+        }
+        function delPhone(obj) {
+            var id = obj.id;
+            var html = '';
+            if (confirm("确定要删除手机[ID:" + obj.id + "]吗?")) {
+                $.ajax({
+                    type: 'get',
+                    url: '/dataplatform/deletePhone/',
+                    data: {
+                        'ids': id
+                    },
+                    contentType: 'application/json',
+                    success: function (data) {
+                        if (data.code === 200) {
+                            html = "删除成功";
+                            part_alert(1, html, main_msg, 5000);
+                            location.reload();
+                        }
+                        else {
+                            html = "删除失败,原因:" + data.msg;
+                            part_alert(3, html, main_msg, 5000);
+                        }
+                    }
+                });
+            }
+        }
+        function addApplication(obj){
+            $(".add_phone_number").val(obj);
+            $(".add_app_user_info").attr("style", "display: inline");
+            $(".table_id_wrapper").attr("style", "display: none");
+            $(".shead").attr("style", "display: none");
+            $(".add_phone_number").attr("id", obj);
+            var app_name = $("#phone_app_info");
+            var app_type = $("#phone_app_type");
+            app_name.empty();
+            app_type.empty();
+            var html = '';
+            show_part_loading();
+            $.ajax({
+                type: 'get',
+                url: '/dataplatform/getAppUser/',
+                data: {
+                    'ts': ts,
+                    'sign_dt': sign_dt
+                },
+                contentType: 'application.json',
+                success: function (data) {
+                    if (data.code === 200) {
+                        hide_part_loading();
+                        $.each(data.data.app_name, function (index, item) {
+                            app_name.append('<option value="'+ item.id +'">'+ item.name +'</option>');
+                        });
+                        $.each(data.data.app_type, function (index, item) {
+                            app_type.append('<option value="'+ item.id +'">'+ item.identityType +'</option>');
+                        });
+                    } else {
+                        html = "获取智云平台应用数据,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000)
+                    }
+                }
+            });
+        }
+        function backAppInfo() {
+            $(".add_app_user_info").attr("style", "display: none");
+            $(".table_id_wrapper").attr("style", "display: inline");
+            $(".shead").attr("style", "display: inline");
+            var ids = $(".add_phone_number")[0];
+            getInfo(ids);
+        }
+        function commitAppData() {
+            var phone_number = $(".add_phone_number").val();
+            var app_type = $("#phone_app_type").val();
+            var phone_app_info = $("#phone_app_info").val();
+            var app_user = $(".app_user").val();
+            var app_pass = $(".app_passwd").val();
+            var html = '';
+            var ids = $(".add_phone_number")[0];
+            if(is_null(app_user)){
+                part_alert(3, '请添加账户', main_msg, 5000);
+            }else{
+                show_part_loading();
+                $.ajax({
+                    type: 'get',
+                    url: '/dataplatform/setPhoneAppInfo/',
+                    data: {
+                        'phone_number': phone_number,
+                        'app_type': app_type,
+                        'phone_app_info': phone_app_info,
+                        'app_user': app_user,
+                        'app_pass': app_pass
+                    },
+                    contentType: 'application.json',
+                    success: function (data) {
+                        if (data.code===200){
+                            hide_part_loading();
+                            html = "手机应用添加成功";
+                            part_alert(1, html, main_msg, 5000);
+                            setTimeout(function () {
+                                $(".add_app_user_info").attr("style", "display: none");
+                                $(".table_id_wrapper").attr("style", "display: inline");
+                                $(".shead").attr("style", "display: inline");
+                                getInfo(ids);
+                            }, 2000);
+                        }else{
+                            html = "手机应用添加失败,原因:" + data.msg;
+                            part_alert(3, html, main_msg, 5000)
+                        }
+                    }
+                });
+            }
+        }
+        function alterPhoneAppl(obj) {
+            var html = '';
+            var ids = obj.id;
+            $.ajax({
+                type: 'get',
+                url: '/dataplatform/getPhoneApp',
+                data: {
+                    'ids': ids
+                },
+                contentType: 'application.json',
+                success: function (data) {
+                    if(data.code === 200){
+                        var res = data.data.data;
+                        var o = '';
+                        var p = '';
+                        $.each(data.data.ut, function (index, item) {
+                            if (item.id === parseInt(res.applicationsType)){
+                                o += '<option selected="selected" value='+item.id+'>'+item.identityType+'</option>'
+                            }else{
+                                o += '<option value='+item.id+'>'+item.identityType+'</option>'
+                            }
+                        });
+                        $.each(data.data.ua, function (index, item) {
+                            if (item.id === parseInt(res.applicationsName)){
+                                p += '<option selected="selected" value='+item.id+'>'+item.name+'</option>'
+                            } else {
+                                p += '<option value='+item.id+'>'+item.name+'</option>'
+                            }
+                        });
+                        html = '<div class="box-body">' +
+                                    '<div class="col-md-2">' +
+                                        '<input class="input-text alter_phone_number" placeholder="手机号码" ' + 'id="' + res.phoneNumber + '" name="' + ids +
+                            '" style="line-height: 28px" disabled="disabled" value="'+res.phoneNumber+'">' +
+                                    '</div>' +
+                                    '<div class="col-md-2">' +
+                                        '<select id="alter_phone_app_type" class="form-control" data-size="5" style="width: 100%">' +
+                                            o +
+                                        '</select>' +
+                                    '</div>' +
+                                    '<div class="col-md-2">' +
+                                        '<select id="alter_phone_app_info" class="form-control" data-size="5" style="width: 100%">' +
+                                            p +
+                                        '</select>' +
+                                    '</div>' +
+                                    '<div class="col-md-2">' +
+                                        '<input class="input-text alter_app_user" placeholder="账户" style="line-height: 28px" value='+res.applicationsUser +'>' +
+                                    '</div>' +
+                                    '<div class="col-md-2">' +
+                                        '<input class="input-text alter_app_passwd" placeholder="密码" style="line-height: 28px" value="'+res.applicationsPass+ '" id="' + res.id +'">' +
+                                    '</div>';
+                        show_fuceng(1,'手机应用信息修改',html ,getfcWidth(), '关闭', '修改', 'alter_phone_application')
+                    }else{
+                        html = "获取修改数据失败,原因：" + data.msg;
+                        part_alert(3, html, main_msg, 5000)
+                    }
+                }
+            });
+        }
+    </script>
+{% endblock %}

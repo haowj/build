@@ -1,0 +1,9 @@
+9960000	DATABASE
+9960001	SQL Server 
+9960002	Oracle     
+9960003	MySql      
+9960004	DB2        
+9960005	nformix
+9960007	Sybase     
+9960008	PostgreSQL 
+9969999	ÆäËû

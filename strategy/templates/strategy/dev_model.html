@@ -1,0 +1,206 @@
+{% extends 'strategy/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}型号{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block content %}
+    <div class="row shead">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <button type="submit" class="btn btn-primary addsdc" onclick="jump()">新增配置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row new_conf" style="display:none">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">新增设备</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="col-md-2">
+                        <select id="dev_model_type" name="dev_model_type" class="form-control">
+                            {#            //逐条插入后端数据库查询返回的结果#}
+                            <option>请选择设备类型</option>
+                            {% for foo in add.type %}
+                                <option>{{ foo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="oem" name="oem" class="form-control">
+                            {#            //逐条插入后端数据库查询返回的结果#}
+                            {% for foo in add.oem_info %}
+                                <option value="{{ foo.id }}">{{ foo.oem_name }}-{{ foo.oem_code }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input class="input-text zy_model" placeholder="智云型号" style="line-height: 28px">
+                    </div>
+                    <div class="col-md-2">
+                        <input class="input-text oem_model" placeholder="厂商型号" style="line-height: 28px">
+                    </div>
+                </div>
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-primary  addsdc" onclick="ajax()">提交</button>
+                    <button type="submit" class="btn btn-primary addsdc" onclick="jump()">返回</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+     <div class="row table_id_wrapper">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="superdconf" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>类型</th>
+                            <th>智云型号</th>
+                            <th>厂商型号</th>
+                            <th>厂商名称</th>
+                            <th>厂商编码</th>
+                            <th>操作人</th>
+                            <th>时间</th>
+
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in get%}
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td>{{ i.type }}</td>
+                                <td>{{ i.zy_model }}</td>
+                                <td>{{ i.oem_model }}</td>
+                                <td>{{ i.oem_name }}</td>
+                                <td>{{ i.oem_code }}</td>
+                                <td>{{ i.user }}</td>
+                                <td>{{ i.update_time }}</td>
+                            </tr>
+
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+
+        $(document).ready(function () {
+
+            $('#superdconf').DataTable({
+                "order": [[ 0, "desc" ]]
+            });
+
+        });
+        function jump(){
+            $(".shead").toggle();
+            $(".new_conf").toggle();
+            $(".table_id_wrapper").toggle();
+        }
+
+        function ajax() {
+            dev_model_type = $("#dev_model_type option:selected").val();
+            oem_id = $("#oem option:selected").val();
+            zy_model = $(".zy_model").val();
+            oem_model = $(".oem_model").val();
+            comment = $(".comment").val();
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+            if (zy_model && oem_model && oem_id) {
+                show_part_loading();
+
+                $.ajax({                       //发起ajax请求
+                    type: 'get',
+                    url: '/strategy/setdevmodel/',
+                    data: {
+                        'dev_model_type': dev_model_type,
+                        'zy_model': zy_model,
+                        'oem_model': oem_model,
+                        'oem_id': oem_id,
+                        'comment': comment,
+                        'ts': ts,
+                        'sign': sign_dt
+
+                    },
+                    contentType: 'application/json',
+                    success: function (data) {    //后端返回数据，是列表形式的
+                        hide_part_loading();
+                        if (data.code === 200) {
+                            html = "新增配置成功";
+                            part_alert(1, html, main_msg, 5000);
+                            setTimeout(function () {
+                                $(location).attr('href', '{% url 'strategy:getdevmodel' %}');
+                            }, 2000);
+                        }
+                        else {
+                            html = "新增配置失败,原因:" + data.msg;
+                            part_alert(3, html, main_msg, 5000)
+                        }
+
+
+                    }
+                });
+            } else {
+                html = '缺少必填项！';
+                part_alert(3, html, main_msg, 5000);
+            }
+        }
+
+    </script>
+
+
+{% endblock %}
+{% block css_fun %}
+    <style>
+        td.highlight {
+            background-color: whitesmoke !important;
+        }
+    </style>
+
+    <style>
+        .addsdc{
+                margin-bottom: 20px;
+        }
+        .button { /* 按钮美化 */
+            width: auto; /* 宽度 */
+            height: auto; /* 高度 */
+            border-width: 0; /* 边框宽度 */
+            border-radius: 3px; /* 边框半径 */
+            background: #1E90FF; /* 背景颜色 */
+            cursor: pointer; /* 鼠标移入按钮范围时出现手势 */
+            outline: none; /* 不显示轮廓线 */
+            color: white; /* 字体颜色 */
+            font-size: 17px; /* 字体大小 */
+        }
+
+        .button:hover { /* 鼠标移入按钮范围时改变颜色 */
+            background: #5599FF;
+        }
+
+    </style>
+
+{% endblock %}

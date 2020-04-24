@@ -1,0 +1,293 @@
+{% extends 'appack/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}新增打包规则{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block content %}
+    <div class="row">
+        <div class="col-md-12 package">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            {#        //select控件添加onchange事件#}
+                            <select id="dev_model" name="dev_model" class="form-control">
+                                {#            //逐条插入后端数据库查询返回的结果#}
+                                <option value="">请选择型号</option>
+                                {% for foo in data.dev_model %}
+                                    <option value={{ foo.id }}>{{ foo.zy_model }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="a col-md-4">
+                            {#        //select控件添加onchange事件#}
+                            <select id="djfa" name="djfa" class="form-control">
+                                {#            //逐条插入后端数据库查询返回的结果#}
+                                <option value="">请选择对接方案</option>
+                                {% for foo in data.docking_solution %}
+                                    <option>{{ foo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="package_contains_path" name="pack_type" class="form-control">
+                                {#            //逐条插入后端数据库查询返回的结果#}
+                                <option value="">请选择适配类型</option>
+                                {% for key,v in data.package_contains_path.items %}
+                                    <option value="{{ key }}">适配【{{ key }}】</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row " style="margin-top: 10px">
+                        <div class="col-md-4">
+                            {#        //select控件添加onchange事件#}
+                            <select id="superd_id" name="superd_id" class="form-control">
+                                <option value="">请选择插件版本</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            {#        //select控件添加onchange事件#}
+                            <select id="connector" name="superctl" class="form-control">
+                                <option value="">请选择连接器</option>
+                                {#            //逐条插入后端数据库查询返回的结果#}
+
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            {#        //select控件添加onchange事件#}
+                            <select id="superdcf" name="superdcf" class="form-control">
+                                <option value="">请选择配置文件</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-md-4">
+                            {#        //select控件添加onchange事件#}
+                            <select id="zdpi_sig" name="zdpi_sig" class="form-control">
+                                <option value="">请选择DPI配置文件</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            {#        //select控件添加onchange事件#}
+                            <select id="pack_type" name="pack_type" class="form-control">
+                                <option value="">请选择打包方式</option>
+                                {#            //逐条插入后端数据库查询返回的结果#}
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <input class="form-control rom_version" type="text" placeholder="固件版本号">
+                        </div>
+{#                    </div>#}
+                        <div class="col-md-12" style="margin-top: 10px">
+                            <textarea class="form-control" rows="3" placeholder="备注说明..."></textarea>
+                        </div>
+                    </div>
+                    <div class="box-footer">
+                        <div class="col-sm-2">
+                            <button type="button" class="btn btn-block btn-primary" onclick="ajax()">提交</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block js_fun %}
+    <script>
+        $(document).ready(function () {
+            getadvertising('全局', '打包', 'content', 'content_f');
+             dev_model_id = $("#dev_model");
+            dev_model_id.select2({
+                placeholder: '请选择型号',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+            dev_model_id.change(function () {
+                show_part_loading();
+
+                ts = getTimeStamp();
+                sign_dt = sign(ts);
+                url = '/api/getSuperdInfo?id=' + $(this).val() + "&ts=" + ts + "&sign=" + sign_dt;
+                $.get(url, function (dict) {
+                    hide_part_loading();
+                    superd_id = $('#superd_id');
+                    superd_id.empty();
+                    superd_id.append('<option value="">请选择插件版本</option>');
+                    superd_id.append('<option value="0">【0】- 默认使用最新版本</option>');
+                    $.each(dict.data.superdInfo, function (index, item) {
+                        comment = item.build_reason;
+                        if (typeof comment == "undefined" || comment == null || comment == "") {
+                            comment = '无'
+                        }
+                        superd_id.append('<option value=' + item.id + '>【' + item.id + '】- 版本：【' + item.superd_version + '】- 备注：【' + comment + '】-【' + getLocalTime(item.update_time) + '】</option>');
+                    });
+                });
+            });
+            $('#package_contains_path').change(function () {
+                show_part_loading();
+                ts = getTimeStamp();
+                sign_dt = sign(ts);
+                dev_model_id = $("#dev_model option:selected").val();
+                select_data = $(this).val();
+                connector = $('#connector');
+                pack_type = $('#pack_type');
+                superdcf = $('#superdcf');
+                zdpi_sig = $('#zdpi_sig');
+                connector.empty();
+                pack_type.empty();
+                superdcf.empty();
+                zdpi_sig.empty();
+                package_contains_path_type = $("#package_contains_path option:selected").val();
+                url = '/api/getConnector?package_contains_path_type=' + select_data + "&dev_model_id=" + dev_model_id + "&ts=" + ts + "&sign=" + sign_dt;
+                $.get(url, function (dict) {
+                    hide_part_loading();
+
+                    connector.append('<option value="">请选择连接器</option>');
+                    if (package_contains_path_type.indexOf("c_sapiloader") !== -1) {
+                        ptype = 'supertack'
+                    } else {
+                        ptype = 'superctl'
+                    }
+                    connector.append('<option value="0_' + ptype + '">【0】- 默认使用最新版本</option>');
+
+                    superdcf.append('<option value="">请选择配置文件</option>');
+                    superdcf.append('<option value="0">【0】- 默认最新公共版本</option>');
+                    $.each(dict.data.connector, function (index, item) {
+                        comment = item.comment;
+                        if (typeof comment === "undefined" || comment == null || comment === "") {
+                            comment = '无'
+                        }
+                        connector.append('<option value=' + item.id + '_' + item.type + '>【' + item.id + '】- 版本：【' + item.version + '】- 备注：【' + comment + '】-【' + getLocalTime(item.update_time) + '】</option>');
+                    });
+                    $.each(dict.data.superdcf, function (index, item) {
+                        comment = item.comment;
+                        if (typeof comment === "undefined" || comment == null || comment === "") {
+                            comment = '无'
+                        }
+                        superdcf.append('<option value=' + item.id + '>【' + item.id + '】- 版本：【' + item.superdcf_version + '】- 备注：【' + comment + '】-【' + getLocalTime(item.update_time) + '】</option>');
+                    });
+
+                    pack_type.append('<option value="">请选择打包方式</option>');
+                    $.each(dict.data.pack_type, function (index, item) {
+                        pack_type.append('<option value=' + item + '>压缩格式：' + item + '</option>');
+                    });
+
+                    zdpi_sig.append('<option value="">请选择DPI配置文件</option>');
+                    zdpiInfo_have = 0;
+                    $.each(dict.data.zdpiInfo, function (index, item) {
+                        zdpiInfocomment = item.comment;
+                        is_have = 1;
+                        zdpiInfo_have = 1;
+                        if (is_have === 1) {
+                            zdpi_sig.append('<option value="0">【0】- 默认使用最新版本</option>');
+                        }
+                        zdpi_sig.append('<option value=' + item.id + '>【' + item.id + '】- 专属版本：【' + item.zdpi_sig_version + '】- 备注：【' + zdpiInfocomment + '】-【' + getLocalTime(item.update_time) + '】</option>');
+                        is_have += 1;
+                    });
+                    $.each(dict.data.gzdpiInfo, function (index, item) {
+                        gzdpiInfocomment = item.comment;
+                        if (zdpiInfo_have === 0){
+                            zdpi_sig.append('<option value="0">【0】- 默认使用最新版本</option>');
+                        }
+                        zdpiInfo_have = 1;
+                        zdpi_sig.append('<option value=' + item.id + '>【' + item.id + '】- 通用版本：【' + item.zdpi_sig_version + '】- 备注：【' + gzdpiInfocomment + '】-【' + getLocalTime(item.update_time) + '】</option>');
+                    });
+
+
+                });
+            });
+
+
+        });
+
+        function ajax() {
+            dev_model_id = $("#dev_model option:selected").val();
+            pack_type = $("#pack_type option:selected").val();
+            package_contains_path_type = $("#package_contains_path option:selected").val();
+            sapiloader = "";
+            sapiloaderC = "";
+            superdcf = $("#superdcf option:selected").val();
+            zdpi_sig_id = $("#zdpi_sig option:selected").val();
+            connector = $("#connector option:selected").val();
+            superd_id = $("#superd_id option:selected").val();
+            djfa = $("#djfa option:selected").text();
+            rom_version = $(".rom_version").val();
+            comment = $(".comment").val();
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+            err = 0;
+
+            if (!connector) {
+                part_alert(3, '连接器不能为空', main_msg, 5000);
+            }
+            else if (!pack_type) {
+                part_alert(3, '打包类型不能为空', main_msg, 5000);
+
+            }
+            else if (!package_contains_path) {
+                part_alert(3, '包路径不能为空', main_msg, 5000);
+            } else if (!superdcf) {
+                part_alert(3, '配置文件不能为空', main_msg, 5000);
+            } else if (!zdpi_sig_id) {
+                part_alert(3, 'DPI配置文件不能为空', main_msg, 5000);
+            }
+            else {
+                show_part_loading();
+                $.ajax({                       //发起ajax请求
+                    type: 'get',
+                    url: '/api/packageconfigAdd/',
+                    data: {
+                        'dev_model_id': dev_model_id,
+                        'pack_type': pack_type,
+                        'sapiloaderC_id': sapiloaderC,
+                        'sapiloader_id': sapiloader,
+                        'superdcf_id': superdcf,
+                        'zdpi_sig_id': zdpi_sig_id,
+                        'connector': connector,
+                        'rom_version': rom_version,
+                        'docking_solution': djfa,
+                        'superd_id': superd_id,
+                        'comment': comment,
+                        'package_contains_path_type': package_contains_path_type,
+                        'ts': ts,
+                        'sign': sign_dt
+                    },
+                    contentType: 'application/json',
+                    success: function (data) {    //后端返回数据，是列表形式的
+                        hide_part_loading();
+                        if (data.code === 200) {
+                            html = "新增配置成功";
+                            part_alert(1, html, main_msg, 5000);
+                            setTimeout(function () {
+                                $(location).attr('href', '{% url 'appack:packageconfig' %}');
+                            }, 2000);
+                        } else if (data.code === 409) {
+                            html = data.msg;
+                            part_alert(3, html, main_msg, 5000);
+                            setTimeout(function () {
+                                $(location).attr('href', '{% url 'appack:packageconfig' %}');
+                            }, 2000);
+                        }
+                        else {
+                            html = "新增配置失败,原因:" + data.msg;
+                            part_alert(3, html, main_msg, 5000);
+                        }
+
+
+                    }
+                });
+            }
+        }
+
+    </script>
+
+{% endblock %}

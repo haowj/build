@@ -1,0 +1,209 @@
+{% extends 'strategy/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}DPI配置文件{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block content %}
+    <div class="row basebigo">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <button type="submit" class="btn btn-primary" onclick="jump()">新增配置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row add_zdpi" style="display: none">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">新增</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    {#                    <div class="col-md-2"><input class="input-text version" placeholder="版本号"></div>#}
+                    <div class="col-md-2">
+                        <select class="dev_model form-control">
+                            <option>请选择设备型号</option>
+                            <option value="88888888">全型号通用</option>
+                            {% for i in data %}
+                                <option value="{{ i.id }}">{{ i.zy_model }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {##}
+                    {#                    <div class="col-md-2">#}
+                    {#                        <input class="file" type="file" id="file" name="file" size="10"/>#}
+                    {#                    </div>#}
+                    <div class="col-md-10">
+                        <div><input class="input-text comment" placeholder="备注"></div>
+                    </div>
+
+                </div>
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-primary addsdc" onclick="gen_dpi_conf()">提交</button>
+                    <button type="submit" class="btn btn-primary addsdc" onclick="jump()">
+                        返回
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row list_zdpi">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="table_id" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>型号</th>
+                            <th>版本</th>
+                            <th>文件</th>
+                            <th>MD5</th>
+                            <th>操作人</th>
+                            <th>备注</th>
+                            <th>更新时间</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in list_data %}
+
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td>{{ i.dev_model }}</td>
+                                <td>{{ i.zdpi_sig_version }}</td>
+                                <td>{{ i.zdpi_sig_file }}</td>
+                                <td>{{ i.md5 }}</td>
+                                <td>{{ i.user }}</td>
+                                <td>{{ i.comment }}</td>
+                                <td>{{ i.update_time }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+
+        $(document).ready(function () {
+
+
+            $('#table_id').DataTable({
+                "order": [[0, "desc"]],
+                "destroy": true,
+                {#"scrollY": 300,#}
+                "scrollX": true,
+                "scrollCollapse": true,
+                "bPaginate": true,
+                "bLengthChange": true,
+                "bAutoWidth": true,
+                "aaSorting": [],
+            });
+
+        });
+
+        function jump(){
+            $(".add_zdpi").toggle();
+            $(".list_zdpi").toggle();
+            $(".basebigo").toggle();
+        }
+
+        function ajax() {
+            dev_model_class = $(".dev_model");
+            form_data = new FormData();
+            version = $(".version").val();
+            file = $(".file")[0].files[0];
+            comment = $(".comment").val();
+            dev_model = dev_model_class.find("option:selected").text();
+            dev_model_id = dev_model_class.find("option:selected").val();
+            cf_type = $(".cf_type").find("option:selected").val();
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+            form_data.append('file', file);
+            form_data.append('version', version);
+            form_data.append('comment', comment);
+            form_data.append('dev_model', dev_model);
+            form_data.append('dev_model_id', dev_model_id);
+            form_data.append('ts', ts);
+            form_data.append('sign', sign_dt);
+            show_part_loading();
+            $.ajax({
+                url: "{% url 'strategy:setdpi' %}",
+                type: 'POST',
+                cache: false,
+                fileElementId: "file",
+                data: form_data,
+                enctype: 'multipart/form-data',
+                processData: false,
+                contentType: false,
+                dataType: "json",
+
+                success: function (data) {    //后端返回数据，是列表形式的
+                    hide_part_loading();
+
+                    if (data.code === 200) {
+                        html = "新增配置成功";
+                        sw = 1;
+                    }
+                    else {
+                        html = "新增配置失败,原因:" + data.msg;
+                        sw = 3;
+                    }
+                    part_alert(sw, html, main_msg);
+                    show_hide('.list_zdpi', '.add_zdpi');
+                }
+            });
+        }
+
+        function gen_dpi_conf() {
+            show_part_loading();
+            dev_model_class = $(".dev_model");
+            version = $(".version").val();
+            comment = $(".comment").val();
+            dev_model = dev_model_class.find("option:selected").text();
+            dev_model_id = dev_model_class.find("option:selected").val();
+            if(!dev_model_id){
+               part_alert('请选择型号',main_msg);
+               return;
+            }
+            $.ajax({
+                type: 'get',
+                url: '{% url 'dpi:api_generateDpi' %}',
+                data: {
+                    'dev_model': dev_model,
+                    'dev_model_id': dev_model_id,
+                    'comment': comment,
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        part_alert(1, '提交成功', main_msg, 5000);
+                    }
+                    else {
+                        html = "删除失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000);
+                    }
+                }
+
+            });
+        }
+    </script>
+
+
+{% endblock %}

@@ -1,0 +1,466 @@
+{% extends 'appack/index.html' %}
+{% load staticfiles %}
+{% block title %} 上线{% endblock %}
+{% block page_title %}上线操作列表{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block content %}
+    <div class="row first_row" style="display: none">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">发布PG包</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <select class="dev_model form-control" id="dev_model" data-size="5" style="width: 100%;">
+                                <option value="">请选择型号</option>
+                                {% for i in dev_model_list %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select id="package_contains_path" name="pack_type" class="form-control">
+                                <option value="">请选择加载器类型</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="package_re_select form-control">
+                                <option>请选择PG包</option>
+                            </select>
+                        </div>
+                        <div class="cmd_content col-md-2">
+
+                            <select class="save_target_path form-control">
+                                <option value="">请选择存放路径</option>
+                                {% for k,v in save_path.items %}
+                                    <option {{ k }}>{{ v }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="cmd_content col-md-2">
+                            <input type="text" class="form-control  monitor_time" placeholder="保活时间" value="60">
+                        </div>
+                        <div class="cmd_content col-md-2"><input type="text" class="form-control  reconnect_time"
+                                                                 placeholder="重连服务时间" value="86400"></div>
+                    </div>
+                    <div class="row" style="margin-top: 10px">
+                        <div class="cmd_content col-md-6">
+                            <input type="text" class="form-control  run_cmd"
+                                   value="/tmp/sapi/run/supertack start onlyrun d">
+                        </div>
+                        <div class="cmd_content col-md-6">
+                            <input type="text" class="form-control  unpack_cmd" placeholder="解压命令"></div>
+                    </div>
+
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-md-2">
+                            <input type="text" class="form-control  rom_version" placeholder="固件版本"></div>
+                        <div class="col-md-10">
+                            <input type="text" class="form-control  comment" placeholder="备注"></div>
+                    </div>
+                    <div class="box-footer">
+                        <button type="submit" class="btn btn-primary" onclick="dopack()">提交发布</button>
+                        <button type="submit" class="btn btn-primary" onclick="reback()">返回</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row second_row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <button type="submit" class="btn btn-primary" onclick="jump('pg')">发布PG包</button>
+                    <button type="submit" class="btn btn-primary" onclick="jump('sapiloader')">发布加载器</button>
+                </div>
+            </div>
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">上线记录</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="example1" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>型号</th>
+                            <th>版本</th>
+                            <th>类型</th>
+                            <th>包名称</th>
+                            <th>操作人</th>
+                            <th>时间</th>
+                            <th>操作</th>
+
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in release_log|dictsortreversed:"id" %}
+
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td>{{ i.dev_model }}</td>
+                                <td>{{ i.version }}</td>
+                                <td>{{ i.rtype }}</td>
+                                <td>{{ i.plug_name }}</td>
+                                <td>{{ i.user }}</td>
+                                <td>{{ i.update_time }}</td>
+                                <td><a type="button" class="release" id="{{ i.id }}_{{ i.rtype }}"
+                                       onclick="getInfo(this)">查看详情</a>
+                                </td>
+
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row third_row" style="display: none">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">发布加载器</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-2"><input id='area' type="text" class="form-control  area"
+                                                                 placeholder="请输入项目发起地区"></div>
+                        <div class="col-md-2">
+                            <select class="sapiloader_dev_model form-control" id="sapiloader_dev_model" data-size="5" style="width: 100%;">
+                                <option value="">请选择型号</option>
+                                {% for i in dev_model_list %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-8">
+
+                            <select class="sapiloader_pack_sel form-control">
+                                <option value="">请选择加载器压缩包</option>
+
+                            </select>
+                        </div>
+                    </div>
+
+
+                    <div class="box-footer">
+                        <button type="submit" class="btn btn-primary" onclick="release_sapiloader()">提交发布</button>
+                        <button type="submit" class="btn btn-primary" onclick="reback()">返回</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+        $(function () {
+            dev_model_id = $("#dev_model");
+            sapiloader_dev_model_id = $("#sapiloader_dev_model");
+            dev_model_id.select2({
+                placeholder: '请选择型号',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+            sapiloader_dev_model_id.select2({
+                placeholder: '请选择型号',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+
+            main_msg = ".main-msg";
+            dev_model_id.change(function () {
+                package_contains_path = $("#package_contains_path");
+                package_contains_path.empty().append('<option >请选择加载器类型</option>');
+                {% for foo,v in package_contains_path.items %}
+                    package_contains_path.append('<option value={{ foo }}>{{ foo }}</option>');
+                {% endfor %}
+            });
+
+            $('#example1').DataTable({
+                //跟数组下标一样，第一列从0开始，这里表格初始化时，第四列默认降序
+                "order": [[0, "desc"]]
+            });
+
+            $('#package_contains_path').change(function () {
+                show_part_loading(main_msg);
+                dev_model = $("#dev_model option:selected").val();
+                package_contains_path_type = $(this).val();
+                ts = getTimeStamp();
+                sign_dt = sign(ts);
+                if (package_contains_path_type.indexOf("c_sapiloader") !== -1) {
+                    $(".cmd_content").show()
+                } else {
+                    $(".cmd_content").hide()
+                }
+                if (!dev_model) {
+                    alert('请先选择设备型号！')
+                } else {
+                    url = '/api/getPackageInfo?package_contains_path_type=' + package_contains_path_type + "&ts=" + ts + "&sign=" + sign_dt + "&dev_model=" + dev_model + "&t=pg";
+                    $.get(url, function (dict) {
+                        hide_part_loading(main_msg);
+                        package_config = $('.package_re_select');
+                        package_config.empty();
+                        package_config.append('<option>请选择PG包</option>');
+                        $.each(dict.data, function (index, item) {
+                            package_config.append('<option value=' + item.id + '>【' + item.id + '】-包内路径:【' + item.package_contains_path + '】-包名称:【' + item.pack_name + '】</option>');
+                        });
+                    });
+                }
+
+            });
+            $('.package_re_select').change(function () {
+                show_part_loading(main_msg);
+                package_re_select_id = $(this).val();
+                ts = getTimeStamp();
+                sign_dt = sign(ts);
+                url = '/api/getPackageIDInfo?id=' + package_re_select_id + "&ts=" + ts + "&sign=" + sign_dt;
+                $.get(url, function (dict) {
+                    hide_part_loading(main_msg);
+                    v = dict.data;
+                    console.log(v);
+                    if (v === 'lzma') {
+                        unpack_cmd = 'tar -xf @plug -C /tmp && killall -9 superd'
+                    } else {
+                        unpack_cmd = 'tar -xzvf @plug -C /tmp && killall -9 superd'
+                    }
+                    $('.unpack_cmd').attr("value", unpack_cmd);
+                });
+            });
+
+            sapiloader_dev_model_id.change(function () {
+                s_dev_model = $(".sapiloader_dev_model option:selected").val();
+                ts = getTimeStamp();
+                sign_dt = sign(ts);
+                if (s_dev_model !== '请选择型号') {
+                    url = '/api/getPackageInfo?dev_model=' + s_dev_model + "&ts=" + ts + "&sign=" + sign_dt + "&t=sapiloader";
+                    show_part_loading(main_msg);
+                    $.get(url, function (dict) {
+                        hide_part_loading(main_msg);
+                        package_config = $('.sapiloader_pack_sel');
+                        package_config.empty();
+                        package_config.append('<option>请选择加载器压缩包</option>');
+                        $.each(dict.data, function (index, item) {
+                            package_config.append('<option value=' + item.id + '>【' + item.id + '】-包名称:【' + item.pack_name + '】</option>');
+                        });
+
+                    });
+                }
+            });
+
+        });
+
+        function reback() {
+            $('.second_row').show();
+            $('.first_row').hide();
+            $('.third_row').hide();
+        }
+
+        function jump(t) {
+            if (t === 'pg') {
+                $('.first_row').show();
+                $('.third_row').hide();
+            } else {
+                $('.first_row').hide();
+                $('.third_row').show();
+            }
+            $('.second_row').hide();
+
+        }
+
+        function dopack() {
+            package_contains_path_type = $("#package_contains_path").val();
+            url = '/api/release/';
+            id = $(".package_re_select option:selected").val();
+            save_target_path = $(".save_target_path option:selected").val();
+            run_cmd = $(".run_cmd").val();
+            unpack_cmd = $(".unpack_cmd").val();
+            monitor_time = $(".monitor_time").val();
+            reconnect_time = $(".reconnect_time").val();
+            rom_version = $(".rom_version").val();
+            comment = $(".comment").val();
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+            if (!dev_model) {
+                msg = '请选择型号';
+                part_alert(3, msg, main_msg, 5000);
+                return;
+            }
+            if (!package_contains_path_type) {
+                msg = '请选择加载器类型';
+                part_alert(3, msg, main_msg, 5000);
+                return;
+            }
+
+            if (!id) {
+                msg = '请选择PG包';
+                part_alert(3, msg, main_msg, 5000);
+                return;
+            }
+            if (package_contains_path_type.indexOf("c_sapiloader") !== -1) {
+
+                if (!save_target_path) {
+                    msg = '请选择PG包存放路径';
+                    part_alert(3, msg, main_msg, 5000);
+                    return;
+                }
+                if (!monitor_time) {
+                    msg = '请输入保活时间';
+                    part_alert(3, msg, main_msg, 5000);
+                    return;
+                }
+                if (!reconnect_time) {
+                    msg = '请输入重连服务时间';
+                    part_alert(3, msg, main_msg, 5000);
+                    return;
+                }
+
+                if (!run_cmd) {
+                    msg = '请输入执行命令';
+                    part_alert(3, msg, main_msg, 5000);
+                    return;
+                }
+                if (!unpack_cmd) {
+                    msg = '请输入解压命令';
+                    part_alert(3, msg, main_msg, 5000);
+                    return;
+                }
+            }
+
+            data = {
+                'id': id,
+                'save_target_path': save_target_path,
+                'run_cmd': run_cmd,
+                'unpack_cmd': unpack_cmd,
+                'monitor_time': monitor_time,
+                'reconnect_time': reconnect_time,
+                'rom_version': rom_version,
+                'comment': comment,
+                'ts': ts,
+                'sign': sign_dt,
+                't': 'pg'
+            };
+            show_part_loading(main_msg);
+            $.ajax({                       //发起ajax请求
+                type: 'get',
+                url: url,
+                data: data,
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    hide_part_loading(main_msg);
+                    if (data.data.code === 200) {
+                        html = "提交成功";
+                        part_alert(1, html, main_msg);
+                        setTimeout(function () {
+                            $(location).attr('href', '{% url 'appack:release' %}');
+                        }, 2000);
+                    }
+                    else {
+                        html = "提交失败,原因:" + data.data.msg;
+                        part_alert(3, html, main_msg);
+                    }
+
+
+                }
+            });
+        }
+
+        function release_sapiloader() {
+            url = '/api/release/';
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+            id = $(".sapiloader_pack_sel option:selected").val();
+            area = $(".area").val();
+            if(!id){
+                part_alert(3,'请选择加载器压缩包',main_msg);
+                return;
+            }
+            data = {
+                'id': id,
+                'area': area,
+                'ts': ts,
+                'sign': sign_dt,
+                't': 'sapiloader'
+            };
+            show_part_loading(main_msg);
+            $.ajax({                       //发起ajax请求
+                type: 'get',
+                url: url,
+                data: data,
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.data.code === 200) {
+                        html = "提交成功";
+                        part_alert(1, html, main_msg);
+                        setTimeout(function () {
+                            $(location).attr('href', '{% url 'appack:release' %}');
+                        }, 2000);
+                    }
+                    else {
+                        html = "提交失败,原因:" + data.data.err;
+                        part_alert(3, html, main_msg)
+                    }
+
+
+                }
+            });
+
+        }
+
+        function getInfo(that) {
+            show_part_loading(main_msg);
+            id = that.id;
+            url = '/api/getReleaseInfo';
+            title = '上线详情';
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+            htm = '';
+            $.ajax({                       //发起ajax请求
+                type: 'get',
+                url: url,
+                data: {
+                    'id': id,
+                    'ts': ts,
+                    'sign': sign_dt
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    hide_part_loading(main_msg);
+                    if (data.code === 200) {
+                        detail = data.data[0];
+                        if (detail.rtype === 'pg') {
+                            htm = 'ID:' + detail.id + '\n' + '型号:' + detail.dev_model + '\n' + '上线包类型:' + detail.rtype + '\n' + '配置项名称:' + detail.plug_title_name + '\n' + 'PG包名称:' + detail.plug_name + '\n' + 'PG包MD5:' + detail.plug_md5 + '\n' + '上线插件版本:' + detail.version + '\n' + '加载器执行命令:' + detail.cmd_content + '\n' + '上线说明:' + detail.comment + '\n' + '用户:' + detail.user + '\n' + '时间:' + getLocalTime(detail.update_time);
+                        } else {
+                            htm = 'ID:' + detail.id + '\n' + '型号:' + detail.dev_model + '\n' + '上线包类型:' + detail.rtype + '\n' + '包名称:' + detail.plug_name + '\n' + 'MD5:' + detail.plug_md5 + '\n' + '版本:' + detail.version + '\n' + '上线说明:' + detail.comment + '\n' + '用户:' + detail.user + '\n' + '时间:' + getLocalTime(detail.update_time);
+                        }
+
+                        $(".win_head_title").val('').html(title);
+                        $(".win_detail").val('').html(htm);
+                        $('.win_backgroud').toggle()
+
+                    }
+                    else {
+                        html = "新增配置失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000)
+                    }
+
+                }
+            });
+        }
+    </script>
+
+
+{% endblock %}

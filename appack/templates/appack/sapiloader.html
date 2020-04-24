@@ -1,0 +1,78 @@
+{% extends 'appack/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}加载器{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <button type="submit" class="btn btn-primary addsdc" onclick="jump()">新增配置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">构建成功列表(C)</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="table_id" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>版本</th>
+                            <th>文件</th>
+                            <th>MD5</th>
+                            <th>操作人</th>
+                            <th>更新时间</th>
+
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in data %}
+
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td>{{ i.sapiloader_version }}</td>
+                                <td>{{ i.sapiloader_file }}</td>
+                                <td>{{ i.md5 }}</td>
+                                <td>{{ i.user }}</td>
+                                <td>{{ i.update_time }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+
+        $(document).ready(function () {
+
+            $('#table_id').DataTable({
+                "order": [[ 0, "desc" ]]
+                }
+            );
+
+        });
+        function jump(){
+            $(location).attr('href', '{% url 'appack:sapiloader_add' %}');
+        }
+    </script>
+
+
+{% endblock %}

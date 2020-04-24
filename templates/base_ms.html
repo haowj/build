@@ -1,0 +1,241 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}构建系统{% endblock %}</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <!-- Bootstrap 3.3.6 -->
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <!-- Font Awesome 图标类的-->
+    <link rel="stylesheet" href="{% static 'plugins/font-awesome-4.6.3/css/font-awesome.min.css' %}">
+    <!-- Theme style 主题主css-->
+    <link rel="stylesheet" href="{% static 'dist/css/AdminLTE.min.css' %}">
+    <link rel="stylesheet" href="{% static 'dist/css/skins/_all-skins.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/jquery.dataTables.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/misc.css' %}">
+    {% block css %}{% endblock %}
+    {% block js %}{% endblock %}
+</head>
+<body class="hold-transition skin-blue sidebar-mini">
+<div class="wrapper">
+    {#页面头#}
+    <header class="main-header">
+        <!-- Logo -->
+        <a href="/" class="logo">
+            <!-- logo for regular state and mobile devices -->
+            <span class="logo-lg"><b>构建系统</b></span>
+        </a>
+        <!-- Header Navbar: style can be found in header.less -->
+        <nav class="navbar navbar-static-top">
+            <!-- Sidebar toggle button-->
+            <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+                <span class="sr-only">menu</span>
+            </a>
+
+            {#在线用户信息#}
+            <div class="navbar-custom-menu">
+
+                <ul class="nav navbar-nav">
+                    <!-- Notifications: style can be found in dropdown.less -->
+                    <li class="dropdown user user-menu">
+
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            <span class="datet"></span>
+                            <span class="hidden-xs">当前在线：{{ request.user }} </span>
+                        </a>
+
+                        <ul class="dropdown-menu">
+                            <!-- User image -->
+                            <li class="user-header">
+                                <div class="userInfo">
+                                    当前用户：{{ request.user.first_name }}{{ request.user.last_name }}</div>
+                                <div class="userInfo">EMAIL：{{ request.user.email }}</div>
+                                <div class="userInfo">注册时间：{{ request.user.date_joined }}</div>
+                                <div class="userInfo">上次登录时间：{{ request.user.last_login }}
+                                </div>
+                            </li>
+                            <!-- Menu Footer-->
+                            <li class="user-footer">
+                                <div class="pull-left">
+                                </div>
+                                <div class="pull-right">
+                                    <a href="{% url 'appack:logout' %}" class="btn btn-default btn-flat">退出登录</a>
+                                </div>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+    <!-- 左边操作栏 -->
+    <aside class="main-sidebar">
+        <!-- sidebar: style can be found in sidebar.less -->
+        <section class="sidebar">
+            <!-- search form -->
+            <form action="{% url 'appack:gps' %}" method="get" class="sidebar-form">
+                <div class="input-group">
+                    <input type="text" name="s_data" class="form-control" placeholder="Search...">
+                    <span class="input-group-btn">
+                <button type="submit" name="search" id="search-btn" class="btn btn-flat"><i class="fa fa-search"></i>
+                </button>
+              </span>
+                </div>
+            </form>
+            <!-- /.search form -->
+            <!-- sidebar menu: : style can be found in sidebar.less -->
+
+            <ul class="sidebar-menu">
+                <li class="header">操作</li>
+                <li><a href="{% url 'appack:release' %}"><i class="fa fa-laptop"></i> <span>发布上线</span></a></li>
+                <li><a href="{% url 'appack:package' %}"><i class="fa fa-edit text-yellow"></i> <span>一键打包</span></a>
+                </li>
+
+                <li class="header">打包规则</li>
+                <li><a href="{% url 'appack:packageconfig' %}"><i class="fa fa-folder text-green"></i> <span>策略配置</span></a>
+                </li>
+
+                <li class="header">手动构建</li>
+                <li class="treeview">
+                    <a href="#">
+                        <i class="fa fa-laptop"></i>
+                        <span>插件</span>
+                    </a>
+                    <ul class="treeview-menu">
+                        <li><a href="{% url 'appack:superd' %}"><i class="fa fa-circle-o text-orange"></i>
+                            <span>正式版本</span></a></li>
+                        <li><a href="{% url 'appack:superd_test' %}"><i class="fa fa-circle-o text-orange"></i> <span>测试版本</span></a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li><a href="{% url 'appack:sapiloader_c' %}"><i class="fa fa-circle-o text-green"></i>
+                    <span>加载器(C)</span></a></li>
+                <li><a href="{% url 'appack:connector' %}"><i class="fa fa-circle-o text-purple"></i>
+                    <span>连接器(C)</span></a></li>
+
+                <li class="header">基础信息</li>
+                <li><a href="{% url 'appack:oem' %}"><i class="fa fa-circle-o text-bold"></i> <span>设备厂商</span></a></li>
+                <li><a href="{% url 'appack:dev_model' %}"><i class="fa fa-circle-o text-aqua"></i>
+                    <span>设备型号</span></a></li>
+                <li><a href="{% url 'appack:sapiloader' %}"><i class="fa fa-circle-o text-green"></i>
+                    <span>加载器</span></a></li>
+                <li><a href="{% url 'appack:superdcf' %}"><i class="fa fa-circle-o text-yellow"></i>
+                    <span>配置文件</span></a></li>
+                <li><a href="{% url 'appack:superctl' %}"><i class="fa fa-circle-o text-purple"></i>
+                    <span>连接器</span></a></li>
+
+                <li><a href="{% url 'appack:tag_add' %}"><i class="fa fa-circle-o text-purple"></i> <span>版本</span></a>
+                </li>
+
+                <li class="header">系统</li>
+                <li><a href="{% url 'appack:advertising' %}"><i class="fa fa-circle-o text-purple"></i> <span>公告</span></a>
+                </li>
+                <li><a href="{% url 'appack:management' %}"><i class="fa fa-circle-o text-blue"></i>
+                    <span>后台管理</span></a></li>
+            </ul>
+        </section>
+        <!-- /.sidebar -->
+    </aside>
+
+
+    <!-- The sidebar's background -->
+    <!-- This div must placed right after the sidebar for it to work-->
+    <div class="control-sidebar-bg"></div>
+    <!-- 内容体-->
+    <div class="content-wrapper">
+        <!-- Main content -->
+        <div class="loading_" id="loading_father">
+            <div class="loadEffect">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        <div class="container">
+            <div class="box box-solid box-success" style="display: none">
+                <div class="box-header with-border"><h3 class="box-title">成功</h3></div>
+                <div class="box-body box-body-success"></div>
+            </div>
+            <div class="box box-solid box-danger" style="display: none">
+                <div class="box-header with-border"><h3 class="box-title">危险 </h3></div>
+                <div class="box-body box-body-danger"></div>
+            </div>
+
+            <div id="background" class="win_backgroud">
+                <div id="win_body" class="win_body">
+                    <div class="win_head">
+                        <div id="win_close_button" class="win_close_button" onclick="close()">x</div>
+                        <h4 class="win_head_title"></h4>
+                    </div>
+                    <div class="win_content">
+                        <h5 class="win_title"></h5>
+                        <pre class="win_detail"></pre>
+                    </div>
+                    <div class="win_foot"></div>
+                </div>
+            </div>
+
+            {% block content_out %}{% endblock %}
+
+            <section class="content">
+                <div id="content_f" style="display: none">
+                    <span>公告板：</span>
+                    <pre id="content"></pre>
+                </div>
+                <div class="table-container">
+                    {% block row-one %}{% endblock %}
+                    {% block row-two %}{% endblock %}
+                    {% block content %}{% endblock %}
+                </div>
+            </section>
+            <!-- /.content -->
+        </div>
+    </div>
+    <!-- 底部 -->
+    <footer class="main-footer">
+        <div class="pull-right hidden-xs">
+            <b>Version</b> 3.0
+        </div>
+        <strong>Copyright &copy; 2018-2022 Laboratory.</strong> All
+        rights
+        reserved.
+    </footer>
+    <!-- /.control-sidebar -->
+    <div class="control-sidebar-bg"></div>
+
+</div>
+
+{#这2个js是为了展开效果的。#}
+<script src="{% static 'plugins/jQuery/jquery-2.2.3.min.js' %}"></script>
+<script src="{% static 'dist/js/app.min.js' %}"></script>
+<script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'js/misc.js' %}"></script>
+
+
+<script>
+    $(function () {
+        mydate = new Date();
+        t = mydate.toLocaleString();
+        $(".datet").text(t);
+
+        $("#win_close_button").click(function () {
+            $("#background").toggle()
+        })
+    });
+
+</script>
+{% block js_fun %}{% endblock %}
+{% block css_fun %}{% endblock %}
+</body>
+</html>

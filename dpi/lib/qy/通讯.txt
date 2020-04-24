@@ -1,0 +1,217 @@
+QQ-QQ-0001
+ICQ-ICQ-0002
+YahooMsg-0003
+AOL-0004
+MSN-0005
+IRC-0006
+PP点点通-0007
+SOQ-搜Q-0008
+UCSina-0009
+POPO网易泡泡-0010
+BEE小蜜蜂-0011
+UUT-0012
+新浪通(IRC)-0013
+IMU-0014
+卡盟(KAMUN)-0015
+快递通(KDT)-0016
+策骑(CHATKEY)-0017
+PALTALK（帕聊）-0018
+FXWB飞翔舞吧-0019
+FCM(嘻嘻)-0020
+KC-0021
+WANGWANG(淘宝旺旺)-0022
+MV-0023
+HOHO-0024
+BCHAT(碧聊)-0025
+Google-TALK谷歌聊天-0026
+SKYPE-0027
+FETION(飞信)-0028
+DOSHOW（e话通）-0029
+ETMESSEGER-0030
+UU通-0031
+51彩虹-0032
+天翼LIVE(电信推出的即时通信工具)-0033
+Imichat(上海茂碧推出的手机视频聊天工具)-0034
+米聊(小米推出的手机聊天工具)-MILIAO-0035
+微信(腾迅推出的手机聊天工具)-WECHAT-0036
+百度HI(百度推出的聊天工具)-0037
+whatsapp(沃斯爱普)-0038
+Ebuddy(手机平台上的IM聚合工具，支持MSN、ICQ等)-0039
+友加(手机交友聊天工具)-0040
+个信(短信聊天工具)-0041
+飞聊-0042
+LINE（连我）-0043
+陌陌-0044
+Facebook（脸谱）-0045
+人人网-0046
+易信-0047
+来往-0048
+旺信-0049
+YY语音-YY-0050
+TalkBox-0051
+Voxer（对讲机）-0052
+Viber（外博）-0053
+DiDi（新版Hi）滴滴-0054
+翼聊-0055
+遇见-0056
+Kakao（卡考聊）-0057
+新浪UT-0058
+Oovoo（微聊）-0059
+nimbuzz（咛不知）-0060
+Ispeak-0061
+Yak-0062
+Telegram（电报）-0063
+联众在线-0064
+Qtalk-0065
+Coco360-0066
+沃友-0067
+KK觅友-0068
+IUU-0069
+UMS-0070
+9158音视频-0071
+Jego-0072
+秀色-0073
+Phone+-0074
+在这儿-0075
+好友定位-0076
+爱聊-0077
+YOUNI短信-0078
+Heytell（对讲机）-0079
+Zello（泽罗）-0080
+AireTalk电话视讯-0081
+firechat火聊-0082
+hellotalk边聊边学-0083
+coco voice可可语音-0084
+skout（交友乐园）-0085
+tango（探戈）-0086
+Uxin（有信）-0087
+爱叮铃-0088
+Jabber-0089
+Fring-0090
+啪啪-0091
+千牛聊天-0092
+多开宝-0093
+多账号-0094
+微微-0095
+网信365-0096
+51挂挂-0097
+SMSPRO-0098
+比邻-0099
+陌聊-0100
+Hangouts(环聊)-0101
+KeeChat(信使)-0102
+talkray(通可瑞)-0103
+BBM(黑莓BBM)-0104
+FreePP(普罗通信免费电话)-0105
+Path(连线)-0106
+Vine(喂你)-0107
+Nonoh(喏喏)-0108
+wickr(威客，阅后即焚通信软件)-0109
+Kik(奇科)-0110
+Whisper(耳语)-0111
+Badoo(邂逅游戏)-0112
+imessage(苹果短信)-0113
+ChatOn(莱茵,三星通讯软件)-0114
+Twister(旋风)-0115
+Diaspara-0116
+Hike Message(嗨客信息)-0117
+google plus(谷歌加)-0118
+Keen Chat(敏聊)-0119
+Teachat(茶聊)-0120
+Zalo(咋聊)-0121
+IM+(windowsphone 聊天软件)-0122
+peeem(拼聊)-0123
+pal+(cubie)-0124
+RaidcallRC语音-0125
+cubie messenger趣比通讯-0126
+Hi（老版DiDi）嗨聊-0127
+1Km一公里-0128
+Advice Chat建议聊-0129
+bee talk博扬-0130
+maaii马阿依-0131
+Meet Me遇我-0132
+Nextdoor邻居-0133
+Shots拍照-0134
+TextPlus文本加-0135
+Zoosk在线约会-0136
+COCO-0137
+360-0138
+E话通-0139
+友约-0140
+微会-0141
+hi（美国聊天工具）-0142
+Link-0143
+MICO(www.meetsmiles.com)-0144
+blued(一款同志社交软件)-0145
+bainu(一款蒙语通讯软件)-0146
+tapatalk(论坛助手)-0147
+由咪网信通-0148
+微聚-0149
+云呼-0150
+友声-0151
+聊聊语音-0152
+可信-0153
+GaGahi-0154
+微米-0155
+KK世界聊天-0156
+Unseen(冰岛 官网unseen.is)-0157
+易睦《别名：班聊》-0158
+美丽约-0159
+夜讯-0160
+钉钉-0161
+sayHi-0162
+陌游-0163
+亲友约-0164
+微密-0165
+Yik Yak(美国YikYak公司 匿名社交软件)-0166
+快牙-0167
+嘎嘎-0168
+NextPlus(TextPlus公司，textplus升级版)-0169
+微话-0170
+唱吧-0171
+对面-0172
+66call-0173
+TibetanBook-0174
+乐呼网络电话-0175
+MobileVoip-0176
+SoundCloud-0177
+通通-0178
+fuzd-0179
+Pleex 法国通讯录备份软件 官网http://en.pleex.com/mob-0180
+phonebook 通讯录管理和群发软件 官网http://www.wavel-0181
+SnapNow 官网http://www.snapnowapp.com/-0182
+purechat 官网https://www.purechat.com/-0183
+pass 照片/视频分享软件 官网http://pass.us/-0184
+Jaumo 官网https://www.jaumo.com/-0185
+jackd 官网http://www.jackdapp.com/-0186
+chatapp 官网http://chatapp.mobi-0187
+chatous 官网https://chatous.com/-0188
+ansa 官网http://www.ansa.com/-0189
+Appme 官网http://app.me/-0190
+Friends Talk 官网http://sntown.com/-0191
+Fuze FuzeBox 官网https://www.fuze.com-0192
+GoodTalk 云中致用 官网http://www.appincloud.cn-0193
+TextMe TextMe, Inc 官网https://gotext.me/-0194
+Spuff Spuff Messenger 官网http://www.spuffmessenger.com-0195
+Talkz Talkz Inc. 官网http://www.talkz.com-0196
+Tictoc SK Planet 官网http://www.tictoc.net-0197
+TonTon Cocone Corporation 官网http://www.cocone.co.jp-0198
+Connected2me 官网http://connected2.me-0199
+盛大有你-0200
+支付宝聊天-0201
+nice好赞-0202
+派派-0203
+探探-0204
+Bip-0205
+Bria-0206
+Connexion-0207
+IMO-0208
+LinkedIn（领英）-0209
+众群-0210
+超信-0211
+安司密信-0212
+Sugram-0213
+善讯-0214
+闲聊-0215
+SnapChat-0216
+土豆聊天-0217

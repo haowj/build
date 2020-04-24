@@ -1,0 +1,199 @@
+{% extends 'appack/index.html' %}
+{% load staticfiles %}
+
+{% block title %}PG包配置{% endblock %}
+{% block page_title %}PG包配置列表{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block content %}
+    <div class="row">
+        <div class="col-md-12 package">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    {#                <button class="button addsdc" onclick="jump()">新增包</button>#}
+                    <div class="col-sm-2">
+                        <button type="button" class="btn btn-block btn-primary" onclick="jump()">新增配置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 package">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">包配置列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="example1" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>厂商</th>
+                            <th>型号</th>
+                            <th>对接方案</th>
+                            <th>打包方式</th>
+                            <th>加载器类型</th>
+                            <th>插件版本</th>
+                            <th>连接器版本</th>
+                            <th>配置文件版本</th>
+                            <th>DPI配置文件版本</th>
+                            <th>时间</th>
+                            <th>操作</th>
+
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in data %}
+                            <tr>
+                                <td><a type="button" class="release" id="{{ i.id }}" onclick="getInfo_(this)">{{ i.id }}</a></td>
+                                <td>{{ i.oem_name }}</td>
+                                <td><a type="button" class="release" id="{{ i.id }}" onclick="getInfo_(this)">{{ i.dev_model }}</a></td>
+                                <td>{{ i.docking_solution }}</td>
+                                <td>{{ i.pack_type }}</td>
+                                <td>{{ i.package_contains_path_type }}</td>
+                                {% if i.superd_version == '0' %}
+                                    <td>默认最新</td>
+                                {% else %}
+
+                                    <td>{{ i.superd_version }}</td>
+                                {% endif %}
+                                {% if i.connector_version == '0' %}
+                                    <td>默认最新</td>
+
+                                {% else %}
+                                    <td>{{ i.connector_version }}</td>
+
+                                {% endif %}
+                                {% if i.superdcf_version == '0' %}
+                                    <td>默认最新</td>
+                                {% else %}
+                                    <td>{{ i.superdcf_version }}</td>
+                                {% endif %}
+                                {% if i.zdpi_sig_version == '0' %}
+                                    <td>默认最新</td>
+                                {% else %}
+                                    <td>{{ i.zdpi_sig_version }}</td>
+                                {% endif %}
+                                <td>{{ i.update_time }}</td>
+                                <td><a type="button" class="release" id="{{ i.id }}" onclick="getInfo_(this)">查看详情</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <th>ID</th>
+                            <th>厂商</th>
+                            <th>型号</th>
+                            <th>对接方案</th>
+                            <th>打包方式</th>
+                            <th>加载器类型</th>
+                            <th>插件版本</th>
+                            <th>连接器版本</th>
+                            <th>配置文件版本</th>
+                            <th>DPI配置文件版本</th>
+                            <th>时间</th>
+                            <th>操作</th>
+
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+         $(function () {
+             $('#example1').DataTable({
+                 "order": [[ 0, "desc" ]],
+                 "scrollX": true,
+             });
+         });
+        function jump() {
+            $(location).attr('href', '{% url 'appack:packageconfig_add' %}');
+        }
+
+        function getInfo_(that) {
+
+
+            id = that.id;
+            url = '/api/getPackageConfigInfo';
+            title = '配置详情';
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+            htm = '';
+            show_part_loading();
+            $.ajax({                       //发起ajax请求
+                type: 'get',
+                url: url,
+                data: {
+                    'id': id,
+                    'ts': ts,
+                    'sign': sign_dt
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        hide_part_loading();
+
+                        detail = data.data;
+                        superd_info = detail.superd_info;
+                        superdcf_info = detail.superdcf_info;
+                        connector_info = detail.connector_info;
+
+                        connector_version = connector_info.supertack_version;
+                        connector_file = connector_info.supertack_file;
+                        connector_name = 'supertack';
+                        if (typeof connector_version == "undefined" || connector_version == null || connector_version == "") {
+                            connector_version = connector_info.superctl_version;
+                            connector_file = connector_info.superctl_file;
+                            connector_name = 'superctl';
+                        }
+                        config_info_htm = '<div>配置策略详情：</div><div>ID:' + detail.id + '\n' + '对接方案：' + detail.docking_solution + '\n' + '压缩格式：' + detail.pack_type + '\n' + '包类型：' + detail.package_contains_path_type + '\n' + '包内路径：' + detail.package_contains_path + '\n' + '固件版本：' + detail.rom_version + '\n' + '说明：' + detail.comment + '\n' + '操作人：' + detail.user + '\n' + '时间：' + getLocalTime(detail.update_time) + '\n' + '</div>';
+                        if (typeof superd_info == "undefined" || superd_info == null || superd_info == "") {
+                            superd_info_htm = '<div>插件详情：' + '\n' + '未找到最新版本信息</div>'
+                        } else {
+                            superd_info_htm = '<div>插件详情：</div><div>ID:' + superd_info.id + '\n' + '版本：' + superd_info.superd_version + '\n' + '下载URL：' + superd_info.download_url + '\n' + '文件存放路径：' + superd_info.superd_file + '\n' + 'MD5：' + superd_info.md5 + '\n' + '构建说明：' + superd_info.build_reason + '\n' + '操作人：' + superd_info.user + '\n' + '时间：' + getLocalTime(superd_info.update_time) + '\n' + '</div>';
+                        }
+                        if (typeof superdcf_info == "undefined" || superdcf_info == null || superdcf_info == "") {
+                            superdcf_info_htm = '<div>配置文件详情：' + '\n' + '未找到最新版本信息</div>'
+                        } else {
+                            superdcf_info_htm = '<div>配置文件详情：</div><div>ID:' + superdcf_info.id + '\n' + '版本：' + superdcf_info.superdcf_version + '\n' + '类型：' + superdcf_info.type + '\n' + '文件存放路径：' + superdcf_info.superdcf_file + '\n' + 'MD5：' + superdcf_info.md5 + '\n' + '说明：' + superdcf_info.comment + '\n' + '操作人：' + superdcf_info.user + '\n' + '时间：' + getLocalTime(superdcf_info.update_time) + '\n' + '</div>';
+                        }
+                        if (typeof connector_info == "undefined" || connector_info == null || connector_info == "") {
+                            connector_info_htm = '<div>连接器详情：' + '\n' + '未找到最新版本信息</div>'
+                        } else {
+                            connector_info_htm = '<div>连接器详情：</div><div>ID:' + connector_info.id + '\n' + '连接器名称：' + connector_name + '\n' + '版本：' + connector_version + '\n' + '文件存放路径：' + connector_file + '\n' + 'MD5：' + connector_info.md5 + '\n' + '说明：' + connector_info.comment + '\n' + '操作人：' + connector_info.user + '\n' + '时间：' + getLocalTime(connector_info.update_time) + '\n' + '</div>';
+                        }
+
+                        html = config_info_htm + '\n' + superd_info_htm + '\n' + superdcf_info_htm + '\n' + connector_info_htm;
+                        $(".win_head_title").val('').html(title);
+                        $(".win_detail").val('').html(html);
+                        $('.win_backgroud').toggle()
+
+                    }
+                    else {
+                        html = "新增配置失败,原因:" + data.msg;
+                        part_alert(3,html,main_msg)
+                    }
+
+                }
+            });
+        }
+
+
+    </script>
+
+
+{% endblock %}
+

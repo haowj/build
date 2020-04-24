@@ -1,0 +1,712 @@
+{% extends 'strategy/index.html' %}
+{% load staticfiles %}
+
+{% block title %}打包{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block page_title %}打包{% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-md-12 package">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    {#                <button class="button addsdc" onclick="jump()">新增包</button>#}
+                    <button type="submit" class="btn  btn-primary" onclick="jump()">新增PG包</button>
+                    <button type="submit" class="btn  btn-primary" onclick="jump('sapi')">新增加载器包</button>
+                    <button type="submit" class="btn  btn-primary" onclick="jump('proxy')">新增反向代理包</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row proxy_package_add_row" style="display: none">
+        <div class="col-md-12 proxy_package_add">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">新增反向代理包</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-3" style="width: 13%;">
+                            {#        //select控件添加onchange事件#}
+                            <select class="form-control dev_model_proxy" data-size="5" id="dev_model_proxy" name="dev_model_proxy" style="width: 100%">
+                                {#            //逐条插入后端数据库查询返回的结果#}
+                                <option value="">请选择型号</option>
+                                {% for foo in data.dev_model %}
+                                    <option value={{ foo.zy_model }}>{{ foo.zy_model }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="box-footer">
+                            <button type="submit" class="btn btn-primary" onclick="proxy_dopack()">提交打包
+                            </button>
+                            <button type="submit" class="btn btn-primary" onclick="reback()">返回</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row sapiloader_package_add_row" style="display: none">
+        <div class="col-md-12 sapiloader_package_add">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">新增加载器包</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-2" style="width: 13%;">
+                            {#        //select控件添加onchange事件#}
+                            <select id="dev_model_sapiloader" name="dev_model_sapiloader" class="form-control" data-size="5"
+                                    style="width: 100%">
+                                {#            //逐条插入后端数据库查询返回的结果#}
+                                <option value="">请选择型号</option>
+                                {% for foo in data.dev_model %}
+                                    <option value={{ foo.zy_model }}>{{ foo.zy_model }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-10">
+                            <select class="form-control" id="sapiloader_ver" data-size="5" style="width: 100%;">
+                                <option value="">默认最新版本</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 10px">
+                        <section class="col-md-12 package_detail">
+                        </section>
+                    </div>
+                    <div class="box-footer">
+                            <button type="submit" class="btn btn-primary" onclick="sapiloader_dopack()">提交打包
+                            </button>
+                            <button type="submit" class="btn btn-primary" onclick="reback()">返回</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row package_add_row" style="display: none">
+        <div class="col-md-12 package_add">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">新增PG包</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            {#        //select控件添加onchange事件#}
+                            <select id="dev_model" name="dev_model" class="form-control" data-size="5" style="width: 100%;">
+                                {#            //逐条插入后端数据库查询返回的结果#}
+                                {% for foo in data.dev_model %}
+                                    <option value={{ foo.zy_model }}>{{ foo.zy_model }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="package_contains_type" class="form-control" data-size="5" style="width: 100%;">
+                                <option value="0">默认最新</option>
+                                <option value="1">自定义</option>
+                            </select>
+                        </div>
+
+                        <div class="cmd_content col-md-4">
+                            <select id="package_contains_path" class="super_model form-control" data-size="5" style="width: 100%;">
+                                <option value="">适配器类型</option>
+                                {% for foo in data.spuer_los %}
+                                    <option value={{ foo }}>{{ foo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-top: 10px">
+                        <div class="cmd_content col-md-4">
+                            <select id="connector" class="connector_edition form-control" data-size="5" style="width: 100%;">
+                                <option value="">选择连接器版本</option>
+                            </select>
+                        </div>
+                        <div class="cmd_content col-md-4">
+                            <select id="superdcf" class="super_conf_edition form-control" data-size="5" style="width: 100%;">
+                                <option value="">选择superdcf版本</option>
+                                {% for i in data.super_data_conf %}
+                                    <option value={{ i.id }}>superD配置文件版本：【 {{ i.superdcf_version }} 】</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="cmd_content col-md-4">
+                            <select id="zdpi_sig" class="dpi_edition form-control" data-size="5" style="width: 100%;">
+                                <option value="">选择DPI版本</option>
+                                {% for i in data.dpi_config %}
+                                    <option value={{ i.id }}>{{ i.dev_model }}--{{ i.zdpi_sig_version }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 10px">
+                        <div class="cmd_content col-md-4">
+                            <select id="djfa" class="plan_edition form-control">
+                                <option value="">对接方案</option>
+                                {% for i in data.docking_solution %}
+                                    <option value={{ i }}>{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="cmd_content col-md-4">
+                            <select id="superd_id" class="super_data_edition form-control" data-size="5" style="width: 100%;">
+                                <option value="">选择插件版本</option>
+                            </select>
+                        </div>
+                        <div class="cmd_content col-md-4" >
+                            <select id="pack_type" class="bale_edition form-control" data-size="5" style="width: 100%;">
+                                <option value="">打包方式</option>
+                                {% for i in data.pack_type %}
+                                    <option value={{ i }}>{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="box-footer">
+                            <button type="submit" class="btn btn-primary" onclick="dopack()">提交打包</button>
+                            <button type="submit" class="btn btn-primary" onclick="reback()">返回</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row package_list_row">
+        <div class="col-md-12">
+            <div class="box box-info" id="package">
+                <div class="box-header">
+                    <h3 class="box-title">PG包列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+
+
+                    <table id="example1" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>型号</th>
+                            <th>插件版本</th>
+                            <th>包内路径</th>
+                            <th>打包类型</th>
+                            <th>操作人</th>
+                            <th>时间</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in data.pack_list|dictsortreversed:"id" %}
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td><a href="{{ i.download_url }}">{{ i.dev_model }}</a></td>
+                                <td>{{ i.superd_version }}</td>
+                                <td>{{ i.package_contains_path }}</td>
+                                <td>{{ i.pack_type }}</td>
+                                <td>{{ i.user }}</td>
+                                <td>{{ i.update_time }}</td>
+                                <td><a type="button" class="release" id="{{ i.id }}"
+                                       onclick="getInfo_(this,'pg')">查看详情</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row proxy_package_list_row">
+        <div class="col-md-12">
+            <div class="box box-info" id="package">
+                <div class="box-header">
+                    <h3 class="box-title">反向代理包列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="example2" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>型号</th>
+                            <th>MD5</th>
+                            <th>状态</th>
+                            <th>操作人</th>
+                            <th>时间</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in data.proxydata %}
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td><a href="{{ i.download_url }}">{{ i.dev_model }}</a></td>
+                                <td>{{ i.md5 }}</td>
+                                <td>{{ i.build_status }}</td>
+                                <td>{{ i.user }}</td>
+                                <td>{{ i.update_time }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="row sapiloader_package_list_row">
+        <div class="col-md-12">
+            <div class="box box-info" id="package">
+                <div class="box-header">
+                    <h3 class="box-title">加载器包列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="example2" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>型号</th>
+                            <th>版本</th>
+                            <th>操作人</th>
+                            <th>时间</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in data.sapiloader_pack_list %}
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td><a href="{{ i.url }}">{{ i.dev_model }}</a></td>
+                                <td>{{ i.version }}</td>
+                                <td>{{ i.user }}</td>
+                                <td>{{ i.update_time }}</td>
+                                <td><a type="button" class="release" id="{{ i.id }}"
+                                       onclick="getInfo_(this,'sapiloader')">查看详情</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+        $(function () {
+
+            c = "<img src=\"{% static 'images/wait.png' %}\" width=\"20\" height=\"20\"/>";
+            $(".pp_title").append(c);
+            $('#example1').DataTable({
+                "order": [[0, "desc"]]
+            });
+            $('#example2').DataTable({
+                "order": [[0, "desc"]]
+            });
+            $("#dev_model_proxy").select2({
+                placeholder: '请选择型号',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+
+            $("#dev_model_sapiloader").select2({
+                placeholder: '请选择型号',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+
+            $("#dev_model").select2({
+                placeholder: '请选择型号',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+
+            $("#package_contains_path").select2({
+                placeholder: '请选择适配器',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+            $("#connector").select2({
+                placeholder: '请选择连接器',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+            $("#superdcf").select2({
+                placeholder: '请选择superD conf文件',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+            $("#zdpi_sig").select2({
+                placeholder: '请选择DPI conf文件',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+            $('#superd_id').select2({
+                placeholder: '请选择superD文件',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+            $('#sapiloader_ver').select2({
+                placeholder: '请选择sapiloder文件',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+
+            var ts = getTimeStamp();
+            var sign_dt = sign(ts);
+            var main_msg = ".main-msg";
+            $(".cmd_content").hide();
+
+            $("#package_contains_type").change(function () {
+                var id = $("#dev_model option:selected").val();
+                if (!id) {
+                    part_alert(3, '请选择设备型号', main_msg, 5000);
+                    return;
+                }
+                var package_contains_path_type = $(this).val();
+                if (package_contains_path_type.indexOf("1") !== -1) {
+                    $(".cmd_content").show();
+                    var url = "/strategy/getTagList?ts=" + ts + "&sign=" + sign_dt + "&dev_model=" + id;
+                    show_part_loading(main_msg);
+                    $.get(url, function (data) {
+                        hide_part_loading();
+                        if (data.code !== 200){
+                            var html = "获取失败,原因:" + data.msg;
+                            part_alert(3, html, main_msg, 5000)
+                        }
+                        var superDataOpt = $('#superd_id');
+                        $.each(data.data, function (index, item) {
+                            var superData = item.slice(1);
+                            if (index === 'superD'){
+                                $.each(superData, function (index, item) {
+                                    superDataOpt.append('<option value=' + item + '> superD版本：【' + item + '】</option>');
+                                })
+                            }
+                        });
+                    });
+                } else {
+                    $(".cmd_content").hide();
+                }
+            });
+
+            $("#package_contains_path").change(function () {
+                var id = $("#dev_model option:selected").val();
+                var package_contains_path = $("#package_contains_path option:selected").val();
+                var url = "/strategy/getTagList?ts=" + ts + "&sign=" + sign_dt + "&dev_model=" + id +"&package_contains_path=" + package_contains_path;
+                var connectorOpt = $('#connector');
+                connectorOpt.empty();
+
+                if (!id) {
+                    part_alert(3, '请选择设备型号', main_msg, 5000);
+                    return;
+                }else {
+                    show_part_loading(main_msg);
+                    $.get(url, function (data) {
+                        hide_part_loading();
+                        if (data.code !== 200){
+                            var html = "获取失败,原因:" + data.msg;
+                            part_alert(3, html, main_msg, 5000)
+                        }else{
+                            var connent = data.data.slice(1);
+                            $.each(connent, function (index, item) {
+                            connectorOpt.append('<option value=' + item.supertack_version + '> 连接器版本：【' + item.supertack_version + '】-- 型号:【'+ item.dev_model +'】</option>');
+                            });
+                        }
+                    });
+                }
+            });
+
+            $("#dev_model_sapiloader").change(function () {
+                show_part_loading(main_msg);
+                var url = '/strategy/getTagList?ts=' + ts + "&sign=" + sign_dt;
+                $.get(url, function (data) {
+                    hide_part_loading(main_msg);
+                    if (data.code !== 200){
+                        var html = "获取失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000)
+                    }
+                    var sapiLoaderOpt = $('#sapiloader_ver');
+                    $.each(data.data, function (index, item) {
+                        var superData = item.slice(1);
+                        if (index === 'superApi') {
+                            $.each(superData, function (index, item) {
+                                sapiLoaderOpt.append('<option value=' + item + '> sapiloder版本：【' + item + '】</option>');
+                            })
+                        }
+                    });
+
+                });
+            });
+
+            $('#package_config').change(function () {
+                show_part_loading(main_msg);
+
+                dev_model_id = $("#dev_model option:selected").val();
+                url = '/strategy/getPackageConfigList?id=' + $(this).val() + "&dev_model_id=" + dev_model_id + "&ts=" + ts + "&sign=" + sign_dt;
+                $.get(url, function (data) {
+                    hide_part_loading(main_msg);
+
+                    if (data.code === 200) {
+                        detail = data.data[0];
+                        htm = '<pre>ID:' + detail.id + '\n' + '厂商:' + detail.oem_name + '\n' + '型号:' + detail.dev_model + '\n' + '对接方案:' + detail.docking_solution + '\n' + '插件版本:' + detail.superd_version +'\n' + 'DPI配置文件版本:' + detail.zdpi_sig_version + '\n' + '连接器版本:' + detail.connector_version + '\n' + '配置文件版本:' + detail.superdcf_version + '\n' + '打包方式:' + detail.pack_type + '\n' + '包内路径:' + detail.package_contains_path + '\n' +
+                            '包类型:' + detail.package_contains_path_type + '\n' + '说明:' + detail.comment + '\n' + '操作人:' + detail.user + '\n' + '时间:' + getLocalTime(detail.update_time) + '</pre>';
+
+                    } else {
+                        htm = '无'
+                    }
+                    add_box('.package_detail', '包详情', htm);
+                    {#$("#table_detail").empty().append(htm);#}
+                    $(".package_config_info_div").show();
+                });
+
+            });
+        });
+
+        function getInfo_(that, type) {
+            show_part_loading(main_msg);
+            id = that.id;
+            url = '/strategy/getpackageinfo/';
+            box_title = '包详情';
+            ts = getTimeStamp();
+            sign_dt = sign(ts);
+            htm = '';
+            $.ajax({                       //发起ajax请求
+                type: 'get',
+                url: url,
+                data: {
+                    'id': id,
+                    'type': type,
+                    'ts': ts,
+                    'sign': sign_dt
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        detail = data.data[0];
+                        if (type === 'pg') {
+
+                            htm = 'ID:' + detail.id + '\n' + '型号:' + detail.dev_model + '\n' + '对接方案:' + detail.docking_solution + '\n' + '插件版本:' + detail.superd_version + '\n' + '连接器版本:' + detail.connector_version + '\n' + '配置文件版本:' + detail.superdcf_version + '\n' + '打包方式:' + detail.pack_type + '\n' + '包内路径:' + detail.package_contains_path + '\n' +
+                                '包名称:' + detail.pack_name + '\n' + 'MD5:' + detail.md5 + '\n' + 'URL:' + detail.download_url + '\n' + '存放路径:' + detail.package + '\n' + '压缩包内容描述:' + detail.pack_content + '\n' + '操作人:' + detail.user + '\n' + '时间:' + getLocalTime(detail.update_time);
+                        } else {
+                            htm = 'ID:' + detail.id + '\n' + '型号:' + detail.dev_model + '\n' + '版本:' + detail.version + '\n' + '构建说明:' + detail.reason + '\n' + '包名称:' + detail.pack_name + '\n' + '下载地址:' + detail.url + '\n' + 'MD5:' + detail.md5 + '\n' + '操作人:' + detail.user + '\n' + '更新时间:' + detail.update_time
+                        }
+
+                        hide_part_loading(main_msg);
+
+                        show_global_box(box_title, htm)
+
+                    }
+                    else {
+                        html = "获取失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000)
+                    }
+
+                }
+            });
+        }
+
+        function reback() {
+            hide('.sapiloader_package_add_row');
+            show_hide(".package_list_row", ".package_add_row");
+            show('.package');
+            show('.package_list_row');
+            show('.sapiloader_package_list_row');
+            $('.proxy_package_add_row').hide();
+            $('.proxy_package_list_row').show();
+        }
+
+        function jump(t) {
+            if (t === 'sapi') {
+                $('.sapiloader_package_add_row').show();
+                $('.package_list_row').hide();
+                $('.package').hide();
+                $('.sapiloader_package_list_row').hide();
+                $('.proxy_package_list_row').hide();
+
+            }else if(t==='proxy') {
+                $('.proxy_package_add_row').show();
+                $('.package_list_row').hide();
+                $('.package').hide();
+                $('.sapiloader_package_list_row').hide();
+                $('.proxy_package_list_row').hide();
+            }else {
+
+                $('.package_list_row').hide();
+                $('.sapiloader_package_list_row').hide();
+                $('.package').hide();
+                show('.package_add_row');
+                $('.proxy_package_list_row').hide();
+            }
+        }
+
+        function sapiloader_dopack() {
+            var id = $("#dev_model_sapiloader option:selected").val();
+            var ver = $("#sapiloader_ver option:selected").val();
+            if (!id) {
+                part_alert(3, '请选择设备型号', main_msg, 5000);
+                return;
+            }
+            show_part_loading(main_msg);
+            var url = '/strategy/setsapiloder/';
+            var ts = getTimeStamp();
+            var sign_dt = sign(ts);
+            $.ajax({                       //发起ajax请求
+                type: 'get',
+                url: url,
+                data: {
+                    'id': id,
+                    'ver': ver,
+                    'ts': ts,
+                    'sign': sign_dt
+
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        html = "提交成功";
+                        part_alert(1, html, main_msg);
+                        setTimeout(function () {
+                            $(location).attr('href', '{% url 'strategy:getpackage' %}');
+                        }, 2000);
+                    }
+                    else {
+                        html = "提交失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000)
+                    }
+
+
+                }
+            });
+        }
+        function proxy_dopack() {
+            dev_model = $("#dev_model_proxy option:selected").val();
+            if (!dev_model) {
+                part_alert(3, '请选择设备型号', main_msg, 5000);
+                return;
+            }
+            show_part_loading(main_msg);
+            url = '/strategy/setproxy/';
+            $.ajax({                       //发起ajax请求
+                type: 'get',
+                url: url,
+                data: {
+                    'dev_model': dev_model,
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        html = "提交成功，构建时间大约需要5分钟，请耐心等待。";
+                        part_alert(1, html, main_msg);
+                        setTimeout(function () {
+                            $(location).attr('href', '{% url 'strategy:getpackage' %}');
+                        }, 10000);
+                    }
+                    else {
+                        html = "提交失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000)
+                    }
+
+
+                }
+            });
+        }
+
+
+        function dopack() {
+            var dev_model_id = $("#dev_model option:selected").val();
+            var pack_type = $("#pack_type option:selected").val();
+            var package_contains_type = $("#package_contains_type option:selected").val();
+            var package_contains_path = $("#package_contains_path option:selected").val();
+            var superdcf = $("#superdcf option:selected").val();
+            var zdpi_sig_id = $("#zdpi_sig option:selected").val();
+            var connector = $("#connector option:selected").val();
+            var superd_id = $("#superd_id option:selected").val();
+            var djfa = $("#djfa option:selected").val();
+            var ts = getTimeStamp();
+            var sign_dt = sign(ts);
+            var err = 0;
+
+            if  (!dev_model_id) {
+                part_alert(3, '请选择设备类型', main_msg, 5000);
+            }else if (!package_contains_type) {
+                part_alert(3, '请选择打包方案', main_msg, 5000);
+            }else if (package_contains_type.indexOf("1") !== -1) {
+                if (!connector) {
+                    part_alert(3, '请选择连接器', main_msg, 5000);
+                } else if (!pack_type) {
+                    part_alert(3, '请选择打包方式', main_msg, 5000);
+                } else if (!superd_id) {
+                    part_alert(3, '请选择插件版本', main_msg, 5000);
+                } else if (!superdcf) {
+                    part_alert(3, '请选择配置文件', main_msg, 5000);
+                } else if (!zdpi_sig_id) {
+                    part_alert(3, '请选择DPI版本', main_msg, 5000);
+                } else if (!djfa) {
+                    part_alert(3, '请选择对接方案', main_msg, 5000)
+                }else{
+                    err=1;
+                }
+            }else{ err = 1;}
+            if (err === 1){
+                show_part_loading(main_msg);
+                $.ajax({                       //发起ajax请求
+                    type: 'get',
+                    url: '/strategy/setStrategy/',
+                    data: {
+                        'dev_model_id': dev_model_id,
+                        'pack_type': pack_type,
+                        'superdcf_id': superdcf,
+                        'zdpi_sig_id': zdpi_sig_id,
+                        'connector': connector,
+                        'docking_solution': djfa,
+                        'superd_id': superd_id,
+                        'package_contains_type': package_contains_type,
+                        'package_contains_path': package_contains_path,
+                        'ts': ts,
+                        'sign': sign_dt
+                    },
+                    contentType: 'application/json',
+                    success: function (data) {    //后端返回数据，是列表形式的
+                        hide_part_loading();
+                        if (data.code === 200) {
+                            html = "打包成功";
+                            part_alert(1, html, main_msg, 5000);
+                            setTimeout(function () {
+                                $(location).attr('href', '{% url 'strategy:getpackage' %}');
+                            }, 2000);
+                        } else {
+                            html = "打包失败,原因:" + data.msg;
+                            part_alert(3, html, main_msg, 5000);F
+                        }
+                    },
+                    error: function () {
+                        html = "请求超时";
+                        part_alert(3, html, main_msg, 5000);
+                    }
+                });
+            }
+
+        }
+
+    </script>
+
+{% endblock %}
+

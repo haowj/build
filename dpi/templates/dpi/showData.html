@@ -1,0 +1,429 @@
+{% extends 'dpi/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}DPI分类编码{% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">生成/解析虚拟身份ID</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="col-md-2">
+                        <select class="form-control selectSW"
+                                id="selectSW"
+                                style="width: 100%;">
+                            <option value="1" selected>生成虚拟身份ID</option>
+                            <option value="2">解析虚拟身份ID</option>
+                            <option value="3">新增企业名称</option>
+                        </select>
+                    </div>
+                    <div class="gen">
+                        <div class="col-md-3">
+                            <select class="form-control selectIC"
+                                    id="selectIC" data-size="5"
+                                    style="width: 100%;">
+                                <option value="" selected>请选择身份类型名称</option>
+                                {% for v in identity %}
+                                    <option value="{{ v.code }}">{{ v.identityType }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <select class="form-control selectEC" id="selectEC" style="width: 100%;" data-size="5">
+                                <option value="" selected>请选择应用名称</option>
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="ungen" style="display: none">
+                        <div class="col-md-10" id="un_IC"><input id="un_IC_input" placeholder="请输入虚拟身份ID" maxlength="7">
+                        </div>
+                    </div>
+                    <div class="createEC_class" style="display: none">
+                        <div class="col-md-2">
+                            <select class="form-control selectEC_BT"
+                                    id="selectEC_BT" data-size="5"
+                                    style="width: 100%;">
+                                <option value="" selected>请选择业务类型</option>
+
+                                {% for v in business %}
+                                    <option value="{{ v.id }}">{{ v.businessType }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2"><input id="ec_name_input" placeholder="请输入企业名称"></div>
+                        <div class="col-md-2"><input id="ec_en_input" placeholder="请输入企业英文名称"></div>
+                        <div class="col-md-3"><input id="ec_comment_input" placeholder="备注"></div>
+                        <div class="col-md-1">
+                            <button type="submit" class="btn  btn-primary" onclick="createEC()">提交</button>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12" id="vi_type_id" style="margin-top: 10px"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">业务类型列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+
+                    <table id="table_idu" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>业务类型</th>
+                            <th>EN</th>
+                            <th>CODE</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in business %}
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td>{{ i.businessType }}</td>
+                                <td>{{ i.en }}</td>
+                                <td>{{ i.code }}</td>
+
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">身份类型列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="table_idi" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>身份类型</th>
+                            <th>EN</th>
+                            <th>CODE</th>
+                            <th>说明</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in identity %}
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td>{{ i.identityType }}</td>
+                                <td>{{ i.en }}</td>
+                                <td>{{ i.code }}</td>
+                                <td>{{ i.explaines }}</td>
+
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+
+        $(document).ready(function () {
+
+            $('#table_idi').DataTable(
+                {
+                    "destroy": true,
+                    "scrollY": 300,
+                    {#"scrollX": true,#}
+                    "scrollCollapse": true,
+                    "bPaginate": true,
+                    "bLengthChange": true,
+                    "bAutoWidth": true,
+                    "aaSorting": [],
+                    "order": [[0, "desc"]]
+                }
+            );
+
+            $('#table_idu').DataTable(
+                {
+                    "destroy": true,
+                    "scrollY": 300,
+                    {#"scrollX": true,#}
+                    "scrollCollapse": true,
+                    "bPaginate": true,
+                    "bLengthChange": true,
+                    "bAutoWidth": true,
+                    "aaSorting": [],
+                    "order": [[0, "desc"]]
+                }
+            );
+
+            selectIC = $('.selectIC');
+            selectSW = $('.selectSW');
+            selectEC = $('.selectEC');
+            selectEC_BT = $('.selectEC_BT');
+            selectBT = $('.selectBT');
+            selectSW.change(function () {
+                sw = selectSW.val();
+                if (sw === '1') {
+                    hide('.ungen');
+                    hide('.createEC_class');
+                    show('.gen');
+                } else if (sw === '2') {
+                    hide('.gen');
+                    hide('.createEC_class');
+                    show('.ungen');
+                } else {
+                    hide('.gen');
+                    hide('.ungen');
+                    show('.createEC_class');
+                }
+            });
+            selectIC.select2({
+                placeholder: '请选择身份类型名称',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+
+            selectBT.select2({
+                placeholder: '请选择业务类型',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+            selectEC_BT.select2({
+                placeholder: '请选择业务类型',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+            selectEC.select2({
+                placeholder: '请选择应用名称',
+                {#tags: true,//允许手动添加#}
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+                escapeMarkup: function (markup) {
+                    return markup;
+                },// 自定义格式化防止xss注入
+                minimumInputLength: 1,//最少输入多少个字符后开始查询
+                ajax: {
+                    url: "{% url 'dpi:api_get_ec' %}",
+                    dataType: 'json',
+                    data: function (params) {
+                        query = { //请求的参数, 关键字和搜索条件之类的
+                            name: params.term //select搜索框里面的value
+                        };
+
+                        // Query paramters will be ?search=[term]&page=[page]
+                        return query;
+                    },
+                    delay: 250,
+                    cache: true,
+                    processResults: function (data, params) {
+                        //返回的选项必须处理成以下格式
+                        results = data.data;
+
+                        return {
+                            results: results  //必须赋值给results并且必须返回一个obj
+                        };
+                    },
+
+                },
+                formatResult: function formatRepo(repo) {
+                    return repo.text;
+                }, // 函数用来渲染结果
+                formatSelection: function formatRepoSelection(repo) {
+                    return repo.text;
+                } // 函数用于呈现当前的选择
+            });
+            gen_vi_type_id();
+            $("#un_IC_input").bind('input porpertychange', function (e) {
+                un_vi_type_id = $("#un_IC_input").val();
+                if (!isNaN(un_vi_type_id) && un_vi_type_id.length === 7) {
+                    ///返回true代表非数字,返回false,代表是有效数字
+                    url = '{% url 'dpi:api_analysis_vi_type_id' %}?vi_type_id=' + un_vi_type_id;
+                    show_part_loading();
+                    $.get(url, function (dict) {
+                        hide_part_loading();
+                        data = dict.data;
+                        hide_part_loading(main_msg);
+                        if (data) {
+                            bdata = data['bdata'];
+                            edata = data['edata'];
+                            idata = data['idata'];
+                            if (!edata['en']) {
+                                ec_msg = '【当前应用类型没有英文缩写，需要补充】';
+                                ec_style = '<span style="color:red;margin-left: 26px;">';
+                            } else {
+                                ec_style = '<span style="color:green;margin-left: 26px;">';
+                                ec_msg = '';
+                            }
+                            ec_html = '企业编码(' + edata['code'] + '): ' + ec_style + '[' + edata['name'] + ']' + ec_msg + '</span>';
+                            result_message = '业务类型(' + bdata['code'] + '): <span style="color:green;margin-left: 40px;">[' + bdata['businessType'] + ']</span><br> ' +
+                                ec_html +
+                                '<br> 身份类型编码(' + idata['code'] + '): <span style="color:green;margin-left: 19px;">[' + idata['identityType'] + ']</span>';
+                            hide('#vi_type_id');
+                            show_message('#vi_type_id', result_message, '解析结果：')
+                        } else {
+                            part_alert(3, data.msg)
+                        }
+
+                    });
+                }
+
+            });
+
+        });
+
+        function createEC() {
+            typeCode_id = $("#selectEC_BT").val();
+            ename = $("#ec_name_input").val();
+            een = $("#ec_en_input").val();
+            ecomment = $("#ec_comment_input").val();
+            if (is_null(typeCode_id)) {
+                part_alert(3, '请输入选择业务类型', main_msg, 5000);
+                return;
+            }
+            if (is_null(ename)) {
+                part_alert(3, '请输入企业名称', main_msg, 5000);
+                return;
+            }
+            if (is_null(een)) {
+                part_alert(3, '请输入英文名称', main_msg, 5000);
+                return;
+            }
+
+
+            show_part_loading();
+            $.ajax({
+                type: 'get',
+                url: '{% url 'dpi:api_createEC' %}',
+                data: {
+                    'name': ename,
+                    'en': een,
+                    'typeCode_id': typeCode_id,
+                    'comment': ecomment,
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        part_alert(1, '提交成功', main_msg, 5000);
+                        setTimeout(hide_fuceng(), 3000)
+                    }
+                    else {
+                        html = "删除失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000);
+                    }
+                }
+            });
+        }
+
+        function gen_vi_type_id() {
+            ic = '';
+            ec = '';
+            bt = '';
+            selectIC.on("select2:select", function (e) {
+                ic = $("#selectIC").val();
+                selectEC = $('#selectEC option:selected');
+                bt_ec = selectEC.val();
+                bt_ec_text = selectEC.text();
+                ec_name = bt_ec_text.split('|')[1];
+                ec_en = bt_ec_text.split('|')[2];
+                ec = bt_ec.split('-')[1];
+                bt = bt_ec.split('-')[0];
+                ec_id = bt_ec.split('-')[2];
+                show_vi_type_id(ec_name, ec_id, ec_en);
+            });
+            selectEC.on("select2:select", function (e) {
+                ic = $("#selectIC").val();
+                selectEC = $('#selectEC option:selected');
+                bt_ec = selectEC.val();
+                bt_ec_text = selectEC.text();
+                ec_name = bt_ec_text.split('|')[1];
+                ec_en = bt_ec_text.split('|')[2];
+                ec = bt_ec.split('-')[1];
+                bt = bt_ec.split('-')[0];
+                ec_id = bt_ec.split('-')[2];
+                show_vi_type_id(ec_name, ec_id, ec_en);
+            });
+        }
+
+        function show_vi_type_id(ec_name = '', ec_id = '', ec_en = '') {
+            if (ec_en.indexOf("未找到") !== -1) {
+                ec_en = ''
+            }
+            iid = ec_name + '-' + ec_id + '-' + ec_en;
+            if (ic && ec && bt) {
+                hide('#vi_type_id', 0);
+                code = '虚拟身份ID: <span style="color:green">' + bt + ec + ic + '</span><a class="pointer" onclick="updateEC(this)" id="' + iid + '" style="margin-left: 2%;">点击修改</a>';
+                if (ec.indexOf('error') === -1) {
+                    show_message('#vi_type_id', code, '结果展示：', 1)
+                } else {
+                    show_message('#vi_type_id', '当前应用名称错误：缺少英文，<a class="pointer" onclick="updateEC(this)" id="' + iid + '">请点击修改</a>', '结果展示：', 2)
+
+                }
+            }
+        }
+
+        function updateEC(obj) {
+            ec_name = obj.id.split('-')[0];
+            ec_id = obj.id.split('-')[1];
+            ec_en = obj.id.split('-')[2];
+            update_id = 'ec_en_input_' + ec_id;
+            ec_html = '<span>企业名称：' + ec_name + '</span> <span style="margin-top: 20px;margin-left: 20px;">企业英文名：<input id="' + update_id + '" placeholder="请填写该应用的英文简写" value="' + ec_en + '" style="width:40%"></span>';
+            show_fuceng(1, '更新企业信息[应用]', ec_html, getfcWidth(), '取消', '提交修改', 'ec_en_update');
+            $('#ec_en_update').click(function () {
+                ec_en_input = $("#" + update_id).val();
+                if (ec_en_input === ec_en) {
+                    part_alert(3, '未发现修改', '.modal-loading', 5000);
+                    return;
+                }
+                if (is_null(ec_en_input)) {
+                    part_alert(3, '请输入企业英文', '.modal-loading', 5000);
+                    return;
+                }
+                ajax_ec(ec_id, ec_en_input)
+            })
+        }
+
+        function ajax_ec(id, en) {
+            show_part_loading('.modal-loading');
+            $.ajax({
+                type: 'get',
+                url: '{% url 'dpi:api_updateEC' %}',
+                data: {
+                    'id': id,
+                    'en': en
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        part_alert(1, '修改成功', '.modal-loading', 5000);
+                        setTimeout(hide_fuceng(), 3000)
+                    }
+                    else {
+                        html = "删除失败,原因:" + data.msg;
+                        part_alert(3, html, '.modal-loading', 5000);
+                    }
+                }
+            });
+        }
+
+
+    </script>
+
+
+{% endblock %}

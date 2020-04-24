@@ -1,0 +1,114 @@
+{% extends 'appack/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}型号{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <button type="submit" class="btn btn-primary addsdc" onclick="jump()">新增配置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+     <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="superdconf" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>类型</th>
+                            <th>智云型号</th>
+                            <th>厂商型号</th>
+                            <th>厂商名称</th>
+                            <th>厂商编码</th>
+                            <th>操作人</th>
+                            <th>时间</th>
+
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for j in data%}
+                            {% for k,i in j.items%}
+                            <tr>
+                                <td>{{ k }}</td>
+                                <td>{{ i.type }}</td>
+                                <td>{{ i.zy_model }}</td>
+                                <td>{{ i.oem_model }}</td>
+                                <td>{{ i.oem_name }}</td>
+                                <td>{{ i.oem_code }}</td>
+                                <td>{{ i.user }}</td>
+                                <td>{{ i.update_time }}</td>
+                            </tr>
+                        {% endfor %}
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+
+        $(document).ready(function () {
+
+            $('#superdconf').DataTable({
+                "order": [[ 0, "desc" ]]
+            });
+
+        });
+        function jump(){
+            $(location).attr('href', '{% url 'appack:dev_model_add' %}');
+        }
+    </script>
+
+
+{% endblock %}
+{% block css_fun %}
+    <style>
+        td.highlight {
+            background-color: whitesmoke !important;
+        }
+    </style>
+
+    <style>
+        .addsdc{
+                margin-bottom: 20px;
+        }
+        .button { /* 按钮美化 */
+            width: auto; /* 宽度 */
+            height: auto; /* 高度 */
+            border-width: 0; /* 边框宽度 */
+            border-radius: 3px; /* 边框半径 */
+            background: #1E90FF; /* 背景颜色 */
+            cursor: pointer; /* 鼠标移入按钮范围时出现手势 */
+            outline: none; /* 不显示轮廓线 */
+            color: white; /* 字体颜色 */
+            font-size: 17px; /* 字体大小 */
+        }
+
+        .button:hover { /* 鼠标移入按钮范围时改变颜色 */
+            background: #5599FF;
+        }
+
+    </style>
+
+{% endblock %}

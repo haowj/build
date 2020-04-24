@@ -1,0 +1,240 @@
+{% extends 'dpi/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}DPI配置{% endblock %}
+{% block content %}
+    <div class="row main_btn">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="op_btn" style="display: block">
+                        <button type="submit" class="btn btn-primary" onclick="onlyShowHide('.createDpiPcap',true)">
+                            新增PCAP文件
+                        </button>
+                        <button type="submit" class="btn btn-primary" onclick="onlyShowHide('.createDpiConf',true)">
+                            新增DPI配置
+                        </button>
+                        <button type="submit" class="btn btn-primary" onclick="onlyShowHide('.searchDpiConf',true)">
+                            虚拟身份对应各网安平台
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="con_msg" style="display: none"></div>
+    {#    <div class="pcapcon_msg" style="display: none"></div>#}
+    <div class="row createDpiConf" style="display: none">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">新增DPI特征</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-4"><input id="rule_name" placeholder="请输入规则名称"></div>
+                        <div class="col-md-4"><select class="form-control selectm" id="selectm" data-size="5"
+                                                      style="width: 100%;"></select></div>
+                        <div class="col-md-4">
+                            <select class="form-control selectp"
+                                    id="selectp" data-size="5"
+                                    style="width: 100%;">
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-md-4"><input id="rule_data" placeholder="请输入规则内容"></div>
+                        <div class="col-md-4"><input id="rule_begin_match" placeholder="请输入规则匹配头"></div>
+                        <div class="col-md-4"><input id="rule_end_match" placeholder="请输入规则匹配尾"></div>
+                    </div>
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-md-2"><input id="vi_type_id" placeholder="请输入虚拟身份ID" maxlength="7" readonly>
+                        </div>
+                        <div class="col-md-10"><input id="comment" placeholder="请输入备注"></div>
+                    </div>
+                </div>
+                <div class="box-footer box-footer-class">
+                    <button type="submit" class="btn btn-primary" onclick="onlyShowHide('.main_btn',true)">返回</button>
+                    <button type="submit" class="btn btn-primary" onclick="createDPIConf()">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row createDpiPcap" style="display: none">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">新增DPI特征文件</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-4"><input id="pacp_vi_type_id" placeholder="请输入虚拟身份ID" maxlength="7"></div>
+                        <div class="col-md-4"><input id="taget_account" placeholder="请输入检索账号"></div>
+                        <div class="col-md-4">
+                            <select class="form-control selectmi"
+                                    id="selectmi" data-size="5"
+                                    style="width: 100%;">
+                                <option value="" selected>请选择手机信息</option>
+                                {% for i in data.data %}
+                                    <option value="{{ i.id }}">{{ i.oem }}-{{ i.os_name }}-{{ i.os_version }}-{{ i.oem_os_name }}-{{ i.oem_os_version }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-md-4"><select class="form-control selectAppType"
+                                                      id="selectAppType"
+                                                      style="width: 100%;">
+                            <option value="" selected>请选择应用类型</option>
+                            <option value="app">app</option>
+                            <option value="web">web</option>
+                            <option value="web">桌面应用</option>
+                        </select></div>
+                        <div class="col-md-4"><input id="app_version" placeholder="请输入app/web版本号"></div>
+                        <div class="col-md-4">
+                            <input class="file" type="file" id="file" name="file" size="10"/>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-md-12"><input id="pcap_comment" placeholder="请输入备注"></div>
+                    </div>
+                </div>
+                <div class="box-footer box-footer-class">
+                    <button type="submit" class="btn btn-primary" onclick="onlyShowHide('.main_btn',true)">返回</button>
+                    <button type="submit" class="btn btn-primary" onclick="createDPIPcap()">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row searchDpiConf" style="display: none">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">查询虚拟身份支持情况</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="col-md-3">
+                        <select class="form-control selectsvi" id="selectsvi" data-size="5"
+                                style="width: 100%;"> </select>
+                    </div>
+                    <div class="col-md-8 sviInfo pointer" style="margin-top: 5px"></div>
+                    <div class="col-md-12 table_vip_class" style="margin-top: 20px;display: none">
+                        <table id="table_vip" class="table table-bordered table-hover"></table>
+                    </div>
+                </div>
+                <div class="box-footer box-footer-class">
+                    <button type="submit" class="btn btn-primary" onclick="onlyShowHide('.main_btn',true)">返回</button>
+                    <button type="submit" class="btn btn-primary" onclick="searchDpiConf()">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">DPI配置列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="table_ide" class="table table-bordered table-hover">
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">PCAP文件维护</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="table_ide_p" class="table table-bordered table-hover">
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block js %}
+    <script src="{% static 'js/dpi_conf.js' %}"></script>
+{% endblock %}
+{% block js_fun %}
+    <script>
+
+        $(document).ready(function () {
+            pdata = [];
+            load_dpi_conf();
+            load_dpi_m();
+            load_dpi_p();
+            load_dpi_NSP();
+            table_idi = $("#table_idi");
+            table_idi.DataTable(
+                {
+                    "destroy": true,
+                    "scrollY": 300,
+                    {#"scrollX": true,#}
+                    "scrollCollapse": true,
+                    "bPaginate": true,
+                    "bLengthChange": true,
+                    "bAutoWidth": true,
+                    "aaSorting": [],
+                    "order": [[0, "desc"]]
+                }
+            );
+            $('#table_ide_p').DataTable(
+                {
+                    "destroy": true,
+                    "scrollY": 300,
+                    {#"scrollX": true,#}
+                    "scrollCollapse": true,
+                    "bPaginate": true,
+                    "bLengthChange": true,
+                    "bAutoWidth": true,
+                    "aaSorting": [],
+                    {#"order": [[0, "desc"]]#}
+                }
+            );
+            selectm = $("#selectm");
+            selectsvi = $("#selectsvi");
+            selectm.select2({
+                placeholder: '请选择多模类型',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+            selectsvi.select2({
+                placeholder: '请选择查询类型',
+                allowClear: true,//允许清空
+                language: 'zh-CN',
+            });
+            selectp = $("#selectp");
+            selectp.on("select2:select", function (e) {
+                id = selectp.val();
+
+                $.each(pdata, function (index, i) {
+                    if (i.id == id) {
+                        $('#vi_type_id').val('').val(i.vi_type_id)
+                    }
+                })
+
+            });
+
+        });
+
+
+    </script>
+
+
+{% endblock %}

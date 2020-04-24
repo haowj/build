@@ -1,0 +1,514 @@
+{% extends 'checkout/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}用例管理{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block content %}
+    <div class="row add_button">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <button type="submit" class="btn btn-primary" onclick="show_and_hide()">新增用例</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text_center_t">
+
+    </div>
+
+    <div class="row add_testap" style="display: none">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">新增用例</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control input_args_remark"
+                                   value="" placeholder="请输入用例名称">
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-md-2">
+                            <input type="text" class="form-control input_args_command"
+                                   value="" placeholder="请输入操作指令">
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-md-2">
+                            <input type="text" class="form-control input_args_name"
+                                   value="" placeholder="请输入匹配项">
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-md-2">
+                            <input type="text" class="form-control input_args_vales"
+                                   value="" placeholder="请输入匹配结果">
+                        </div>
+                    </div>
+                </div>
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-primary" onclick="ad_tc()">提交</button>
+                    <button type="submit" class="btn btn-primary" onclick="back_show_and_hide()">返回</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row list_testap">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">用例列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="table_id" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>用例名称</th>
+                            <th>操作指令</th>
+                            <th>匹配项</th>
+                            <th>匹配结果</th>
+                            <th>操作人</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in data %}
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td class="autobreak" style="width: 20%">{{ i.args_remark }}</td>
+                                <td>{{ i.args_command }}</td>
+                                <td>{{ i.args_name }}</td>
+                                <td>{{ i.args_vales }}</td>
+                                <td>{{ i.args_operator }}</td>
+                                <td>{{ i.update_time }}</td>
+                                <td>
+                                    <div class="btn btn-sm btn-primary btn-xs" onclick="update(this)" id="{{ i.id }}">
+                                        修改
+                                    </div>
+                                    <div class="btn btn-sm btn-primary btn-xs" onclick="del(this)" id="{{ i.id }}">删除
+                                    </div>
+                                </td>
+
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row run_testap" style="display: none">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">执行测试</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label>设备信息</label>
+                            <div class="run_testApInfo"></div>
+
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 20px">
+                        <div class="col-md-4">
+                            <label>可选策略</label>
+                            <div class="run_testApTestSetList"></div>
+
+                        </div>
+                    </div>
+
+                </div>
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-primary" onclick="doup()">执行</button>
+                    <button type="submit" class="btn btn-primary" onclick="back_run_show_hide()">返回</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row run_result" style="display: none">
+        <div class="col-md-12">
+            <!-- /.box-header -->
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">执行测试</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div id="show_data_result" class="autoscroll">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+        $(document).ready(function () {
+            $('#table_id').DataTable(
+                {
+                    "destroy": true,
+                    {#"scrollY": 300,#}
+                    {#"scrollX": true,#}
+                    "scrollCollapse": true,
+                    "bPaginate": true,
+                    "bLengthChange": true,
+                    "bAutoWidth": true,
+                    "aaSorting": [],
+                    "order": [[0, "desc"]]
+                }
+            );
+            $('.oem_name').change(function () {
+                oem_name = $(this).val();
+                url = '/checkout/api/getDevModelList?oem_name=' + oem_name;
+                $.get(url, function (dict) {
+                    v = dict.data;
+                    console.log(v);
+                    dev_model = $('.dev_model');
+                    dev_model.empty();
+                    dev_model.append('<option>请选择设备型号</option>');
+                    $.each(dict.data, function (index, item) {
+                        dev_model.append('<option value=' + item.zy_model + '>' + item.zy_model + '</option>');
+                    });
+                });
+            });
+            $("#fuceng_footer_right").click(function () {
+                ids = $('#args_remark').attr('class');
+                args_remark = $('#args_remark').val();
+                args_command = $('#args_command').val();
+                args_name = $('#args_name').val();
+                args_vales = $('#args_vales').val();
+                $.ajax({
+                    type: 'get',
+                    url: '{% url 'checkout:api_upTestCase' %}',
+                    data: {
+                        'ids': ids,
+                        'args_remark': args_remark,
+                        'args_command': args_command,
+                        'args_name': args_name,
+                        'args_vales': args_vales,
+                    },
+                    contentType: 'application/json',
+                    success: function (data) {    //后端返回数据，是列表形式的
+                        if (data.code === 200) {
+                            html = "修改成功";
+                            alert(html);
+                            {#part_alert(1, html, main_msg, 5000);#}
+                            setTimeout(function () {
+                                    $(location).attr('href', '{% url 'checkout:testCaseList' %}');
+                                }, 1000);
+                        }
+                        else {
+                            html = "修改失败,原因:" + data.msg;
+                            part_alert(3, html, main_msg, 5000);
+                        }
+
+                    }
+                });
+            });
+        });
+
+        function show_and_hide() {
+            hide('.add_button');
+            hide('.list_testap');
+            show('.add_testap');
+        }
+
+        function run_show_hide() {
+            hide('.add_button');
+            hide('.list_testap');
+            hide('.add_testap');
+            show('.run_testap');
+        }
+
+        function back_run_show_hide() {
+            show('.add_button');
+            show('.list_testap');
+            hide('.run_testap');
+        }
+
+        function back_show_and_hide() {
+            show('.add_button');
+            show('.list_testap');
+            hide('.add_testap');
+            $(location).attr('href', '{% url 'checkout:testCaseList' %}');
+        }
+
+        function run(obj) {
+            id = obj.id;
+            show_part_loading();
+            $(".run_testApTestSetList").html('');
+            $('.run_testApInfo').html('');
+            confinfook = 1;
+            infook = 1;
+            $.ajax({                       //发起ajax请求
+                type: 'get',
+                url: '{% url 'checkout:api_getTestAPInfo' %}',
+                data: {
+                    'id': id
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        hide_part_loading();
+                        res = data.data[0];
+                        dev_model_id = res.id;
+                        infohtml = '厂商：' + res.oem_name + '，型号：' + res.dev_model + '，SN：' + res.dev_sn + '，IP：' + res.dev_ip + '，PORT：' + res.dev_port + '，账号：' + res.dev_user + '，密码：' + res.dev_password;
+                        $('.run_testApInfo').html('').html(infohtml);
+                        $.ajax({                       //发起ajax请求
+                            type: 'get',
+                            url: '{% url 'checkout:api_getTestSet' %}',
+                            data: {
+                                'id': id
+                            },
+                            contentType: 'application/json',
+                            success: function (data) {    //后端返回数据，是列表形式的
+                                if (data.code === 200) {
+                                    hide_part_loading();
+                                    res = data.data;
+                                    MselectHtml = '<div class="form-group">';
+                                    endselectHtml = '</div>';
+                                    confInfo = '';
+                                    for (i = 0; i < res.length; i++) {
+                                        confInfo = confInfo + '<div class="checkbox"><label><input type="checkbox" class="input_checkbox" name="checkBox" value="' + res[i].id + '|' + res[i].caseSetId + '">策略名称：' + res[i].caseSet_name + '</label></div>'
+                                    }
+                                    mh = MselectHtml + confInfo + endselectHtml;
+                                    $(".run_testApTestSetList").html('').html(mh);
+                                }
+                                else {
+                                    html = "获取执行策略失败,原因:" + data.msg;
+                                    part_alert(3, html, main_msg, 5000);
+                                    confinfook = 0;
+                                }
+                            }
+                        });
+                    } else {
+                        html = "获取设备配置信息时报,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000);
+                        infook = 0;
+                    }
+                }
+            });
+            run_show_hide()
+        }
+
+
+        function doup() {
+            caseSetIdList = getCheckBoxVal();
+            unmb = 0;
+            $.ajax({                       //发起ajax请求
+                type: 'get',
+                url: '{% url 'checkout:api_runTestAP' %}',
+                data: {
+                    'caseSetIdList': caseSetIdList,
+                    'dev_model_id': dev_model_id
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    show('.run_result');
+                    if (data.code === 200) {
+                        caseL = data.data.join();
+
+                        dd = '<div id="prog_out" class="progress progress-striped active"> ' +
+                            '<div id="prog_in" class="progress-bar progress-bar-success" role="progressbar"  aria-valuenow="20" ' +
+                            'aria-valuemin="0" aria-valuemax="100" style="width: 0%;"> </div></div>';
+                        $('#show_data_result').html('').html(dd);
+                        num = randomNum(1, 5);
+                        prog_in = $('#prog_in');
+                        prog_in.width(num + '%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+                        prog_in.html(num + '%');
+                        ins = setInterval(function () {
+                            $.ajax({
+                                type: "get",
+                                url: '{% url 'checkout:api_getCaseResult' %}',
+                                {#        timeout: 60000,#}
+                                async: true,
+                                data: {
+                                    'case_result': caseL,
+                                },
+                                contentType: 'application/json',
+                                success: function (data) {
+
+                                    prog_in.width(num + '%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+                                    if (prog_in.val()) {
+                                        prog_in.empty();
+                                    }
+                                    prog_in.html(num + '%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+                                    add_num = randomNum(2, 5);
+                                    num = num + add_num;
+                                    if (data.data === 200) {
+                                        $('#prog_out').attr("class", "progress progress-bar-success"); // 修改进度条外层div的class, 改为完成形态
+                                        prog_in.html('100%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+                                        rs = data.data;
+                                        rsdata = '';
+                                        for (i = 0; i < rs.length; i++) {
+                                            rsdata += '<tr><td>' + rs[i]['crid'] + '</td><td>' + rs[i]['oem_name'] +
+                                                '</td><td>' + rs[i]['dev_model'] + '</td><td>' + rs[i]['command'] +
+                                                '</td><td>' + rs[i]['check_rule'] + '</td><td>' + rs[i]['check_data'] +
+                                                '</td><td>' + rs[i]['data'] +
+                                                '</td><td><input type="text" name="' + rs[i]['crid'] + ' " value=' + rs[i]['result'] + '></td></tr>'
+                                        }
+                                        dataL = '<table id="superdconf" class="table table-bordered table-hover">' +
+                                            '<thead><tr><th>ID</th><th>厂商</th><th>智云型号</th><th>操作指令</th>' +
+                                            '<th class="autobreak">校验参数</th><th class="autobreak">校验数据</th><th class="autobreak">数据</th><th>结论</th></tr></thead>' +
+                                            '<tbody class="autobreak">' + rsdata + '</tbody></table>';
+                                        clearInterval(ins);
+                                        $('#show_data_result').html('').html(dataL);
+
+                                    } else if (num > 200) {
+                                        html = "运行超时，不再等待。";
+                                        part_alert(3, html, main_msg);
+                                        prog_in.width('0%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+                                        prog_in.html(0 + '%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+                                        setTimeout(function () {
+                                            $(location).attr('href', '{% url 'checkout:testApList' %}');
+                                        }, 2000);
+
+                                    } else if (res.data === 400) {
+                                        hide('.run_result');
+                                        html = "执行失败！";
+                                        part_alert(2, html, main_msg);
+                                        prog_in.width('0%');     // 改变进度条进度，注意这里是内层的div， res是后台返回的进度
+
+                                    }
+
+                                }
+                            });
+                        }, 1000);
+                    }
+                    else {
+                        hide('.run_result');
+                        html = "新增配置失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000)
+                    }
+
+                }
+            });
+
+        }
+
+        function update(obj) {
+            id = obj.id;
+            $.ajax({                       //发起ajax请求
+                type: 'get',
+                url: '{% url 'checkout:api_getTestCase' %}',
+                data: {
+                    'id': id
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        res = data.data[0];
+                        console.log(res);
+                        apHtml = '<div class="row">' +
+                                    '<div class="col-md-6" >' +
+                                        '<label>用例名称：</label>' +
+                                        '<input id="args_remark" class="'+ id +'" style="width:80% !important" type="text" name="fname" value=' + res.args_remark+ '>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="row" style="margin-top: 10px;">' +
+                                    '<div class="col-md-6">' +
+                                        '<label>操作指令：</label>' +
+                                        '<input id="args_command" style="width:50% !important" type="text" name="fname" value=' + res.args_command+ '>' +
+                                    '</div>'  +
+                                '</div>' +
+                                '<div class="row" style="margin-top: 10px;">' +
+                                    '<div class="col-md-6" >' +
+                                        '<label>匹配项：</label>' +
+                                        '<input id="args_name" style="width:50% !important" type="text" name="fname" value=' + res.args_name+ '>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="row" style="margin-top: 10px;">' +
+                                    '<div class="col-md-6">' +
+                                        '<label>匹配结果：</label>' +
+                                        '<input id="args_vales" style="width:50% !important" type="text" name="fname" value=' + res.args_vales+ '>' +
+                                    '</div>' +
+                                '</div>';
+                        show_fuceng(1, '配置详情', apHtml, getfcWidth(), '关闭', '修改')
+                    }
+                    else {
+                        html = "新增配置失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000)
+                    }
+
+                }
+            });
+        }
+        function ad_tc() {
+            args_remark = $('.input_args_remark').val();
+            args_command = $('.input_args_command').val();
+            args_name = $('.input_args_name').val();
+            args_vales = $('.input_args_vales').val();
+            console.log(args_remark);
+            $.ajax({                       //发起ajax请求
+                type: 'get',
+                url: '{% url 'checkout:api_addTestCase' %}',
+                data: {
+                    'args_remark': args_remark,
+                    'args_command': args_command,
+                    'args_name': args_name,
+                    'args_vales': args_vales,
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        html = "新增用例成功";
+                        part_alert(1, html, main_msg, 5000);
+                        setTimeout(function () {
+                                $(location).attr('href', '{% url 'checkout:testCaseList' %}');
+                            }, 1000);
+                    }
+                    else {
+                        html = "新增用例失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000)
+                    }
+
+                }
+            });
+        }
+        function del(obj) {
+            id = obj.id;
+            console.log(id);
+            $.ajax({
+                type: 'get',
+                url: '{% url 'checkout:api_delTestCase' %}',
+                data: {
+                    'id': id
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        html = "删除成功";
+                        part_alert(1, html, main_msg, 5000);
+                        setTimeout(function () {
+                                $(location).attr('href', '{% url 'checkout:testCaseList' %}');
+                            }, 1000);
+                    }
+                    else {
+                        html = "删除失败,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000);
+                    }
+                }
+            });
+        }
+    </script>
+
+
+{% endblock %}

@@ -1,0 +1,31 @@
+service super2d {
+
+    master_log = /tmp/sapi/run/superd.log
+    master_debug = 1:1;2:1;3:1;4:1;5:1;7:1;8:1;9:1;
+
+    log_memory_used_valve = 80 
+
+    httpd_proxy_addr = 0.0.0.0:86
+    httpsd_proxy_addr = apauth.superhcloud.com:1443
+    httpd_rw_timeout = 10
+
+    manage_wayos_mng_addr = apauth.superhcloud.com:6000
+    manage_wayos_guide_addr = apauth.superhcloud.com:6100
+    manage_wayos_auth_addr = apauth.superhcloud.com:6200
+    manage_connect_timeout = 10 
+    manage_rw_timeout = 10 
+
+    manage_heartbeat_interval = 30 
+
+    router_local_addr = /tmp/sapi/run/superd.sock@udp
+    router_peer_addr = /tmp/sapi/run/romd.sock@udp
+
+    audit_addr = audit.superhcloud.com:26500
+    audit_connect_timeout = 10 
+    audit_rw_timeout = 10 
+
+    superinstall_cmd = /tmp/sapi/run/superctl update_sapi
+    sapigetb_cmd = /bin/sapi/sapigetb
+    support_romd = yes
+    firewall_on = yes
+}

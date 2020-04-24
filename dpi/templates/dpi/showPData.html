@@ -1,0 +1,122 @@
+{% extends 'dpi/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}网安平台信息{% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">操作</h3>
+
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="gen">
+
+                        <div class="col-md-3">
+                            <select class="form-control selectBT"
+                                    id="selectBT" data-size="5"
+                                    style="width: 100%;">
+                                <option value="" selected>请选择网安平台</option>
+
+                                {% for v in business %}
+                                    <option value="{{ v.code }}_{{ v.id }}">{{ v.businessType }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-control selectEC" id="selectEC" style="width: 100%;"
+                                    data-size="5">
+                                <option value="" selected>请选择应用类型</option>
+                            </select>
+                        </div>
+                    <div class="col-md-3">
+                        <select class="form-control selectIC"
+                                id="selectIC" data-size="5"
+                                style="width: 100%;">
+                            <option value="" selected>请选择应用</option>
+                            {% for v in identity %}
+                                <option value="{{ v.code }}">{{ v.identityType }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    </div>
+                    <div class="ungen" style="display: none">
+                        <div class="col-md-10" id="un_IC"><input id="un_IC_input" placeholder="请输入虚拟身份ID" maxlength="7">
+                        </div>
+                    </div>
+                    <div class="col-md-12" id="vi_type_id" style="margin-top: 10px"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">网安平台</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="table_id" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>网安名称</th>
+                            <th>网安编码</th>
+                        </tr>
+                        </thead>
+                        <tbody id="table_wa">
+
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+
+        $(document).ready(function () {
+            url = '{% url 'dpi:api_get_platform' %}';
+            show_part_loading();
+            $.get(url, function (data) {
+                if (data.code === 200) {
+                    hide_part_loading();
+                    res = data.data;
+                    confInfo = '';
+                    for (i = 0; i < res.length; i++) {
+                        confInfo = confInfo + '<tr><td>' + res[i].id + '</td><td>' + res[i].wname + '</td><td>' + res[i].code + '</td></tr>'
+                    }
+                    $("#table_wa").html('').html(confInfo);
+
+                } else {
+                    part_alert(3, '网安平台数据为空')
+                }
+                $('#table_id').DataTable({
+                    "destroy": true,
+                    {#scrollY: 300,#}
+                    {#scrollX: true,#}
+                    scrollCollapse: true,
+                    bPaginate: true,
+                    bLengthChange: true,
+                    "bAutoWidth": true,
+                    "aaSorting": [],
+                    "order": [[0, "desc"]],
+                });
+            });
+
+        });
+
+
+    </script>
+
+
+{% endblock %}

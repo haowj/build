@@ -1,0 +1,21 @@
+{% extends 'appack/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}异常{% endblock %}
+
+{% block content %}
+     <div class="row">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">注意</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div class="col-md-12">    <p style="color: red;font-size: 36px">{{ message.msg }}</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends 'checkout/index.html' %}
+{% load staticfiles %}
+
+{% block page_title %}执行记录{% endblock %}
+{## 这个页面完成配置展示、及新增指定型号的superd版本的配置工作。#}
+{% block content %}
+
+    <div class="row list_testap">
+        <div class="col-md-12">
+            <div class="box box-info">
+                <div class="box-header">
+                    <h3 class="box-title">执行记录列表</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table id="table_id" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>厂商</th>
+                            <th>设备型号</th>
+                            <th>测试集名称</th>
+                            <th>执行状态</th>
+                            <th>操作人</th>
+                            <th>操作</th>
+                            <th>创建时间</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in data %}
+                            <tr>
+                                <td>{{ i.id }}</td>
+                                <td>{{ i.oem_name }}</td>
+                                <td>{{ i.dev_model }}</td>
+                                <td>{{ i.case_name }}</td>
+                                <td>{% if i.status == '0' %}创建{% elif i.status == '1' %}上传{% elif i.status == '2' %}
+                                    <img src="{% static 'images/run_ok.png' %}" width="20" height="20"/>{% elif i.status == '3' %}<img src="{% static 'images/run_err.png' %}" width="20" height="20"/>{% else %}
+                                    执行中{% endif %}</td>
+                                <td>{{ i.operator }}</td>
+                                <td>
+                                    <div class="btn btn-sm btn-primary btn-xs" onclick="run(this)" id="{{ i.id }}">查看详情
+                                    </div>
+                                </td>
+                                <td>{{ i.create_time }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="row show_data_result" style="display: none">
+        <div class="col-md-12">
+            <!-- /.box-header -->
+            <div class="col-md-12">
+                <div class="box box-info">
+                    <div class="box-header">
+                        <h3 class="box-title">执行记录列表</h3>
+                    </div>
+                    <!-- /.box-header -->
+                    <div class="box-body">
+                        <table id="run_result" class="table table-bordered table-hover">
+
+                        </table>
+                    </div>
+                    <div class="box-footer">
+                    <button type="submit" class="btn btn-primary" onclick="rback()">返回</button>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block js_fun %}
+    <script>
+        $(document).ready(function () {
+            $('#table_id').DataTable(
+                {
+                    "destroy": true,
+                    {#"scrollY": 300,#}
+                    {#"scrollX": true,#}
+                    "scrollCollapse": true,
+                    "bPaginate": true,
+                    "bLengthChange": true,
+                    "bAutoWidth": true,
+                    "aaSorting": [],
+                    "order": [[0, "desc"]]
+                }
+            );
+            $('#run_result').DataTable(
+                {
+                    "destroy": true,
+                    "scrollY": 300,
+                    {#"scrollX": true,#}
+                    "scrollCollapse": true,
+                    "bPaginate": true,
+                    "bLengthChange": true,
+                    "bAutoWidth": true,
+                    "aaSorting": [],
+                    "order": [[0, "desc"]]
+                }
+            );
+
+        });
+
+        function run_show_hide() {
+            hide('.list_testap');
+            show('.show_data_result');
+        }
+        function rback() {
+            hide('.show_data_result');
+            show('.list_testap');
+        }
+        function run(obj) {
+            id = obj.id;
+            $.ajax({                       //发起ajax请求
+                type: 'get',
+                url: '{% url 'checkout:api_getRecord' %}',
+                data: {
+                    'case_result': id
+                },
+                contentType: 'application/json',
+                success: function (data) {    //后端返回数据，是列表形式的
+                    if (data.code === 200) {
+                        rs = data.data;
+                        htmlData = '';
+                        rsdata = '';
+                        for (i = 0; i < rs.length; i++) {
+                            tresult = rs[i]['result'];
+                            if(tresult==='True'){
+                                rhtml = '<img src="{% static 'images/run_ok.png' %}" width="20" height="20"/>通过';
+                            }else {
+                                rhtml = '<img src="{% static 'images/run_err.png' %}" width="20" height="20"/>失败';
+                            }
+                            rsdata += '<tr><td>' + rs[i]['id'] + '</td><td>' + rs[i]['command'] +
+                                '</td><td class="autobreak">' + rs[i]['check_rule'] + '</td><td class="autobreak">' + rs[i]['check_data'] +
+                                '</td><td class="autobreak">' + rs[i]['data'] + '</td><td>' + rhtml + '</td></tr>'
+                        }
+                        htmlData = '<thead><tr><th>ID</th><th>操作指令</th><th class="autobreak">校验参数</th><th class="autobreak">校验数据' +
+                            '</th><th class="autobreak">数据</th><th>结论</th></tr></thead> <tbody class="autobreak">' + rsdata + '</tbody>';
+
+                        $('#run_result').html('').html(htmlData);
+                        run_show_hide()
+                    } else {
+                        html = "获取设备配置信息时报,原因:" + data.msg;
+                        part_alert(3, html, main_msg, 5000);
+                    }
+                }
+            });
+        }
+    </script>
+
+
+{% endblock %}
